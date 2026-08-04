@@ -1,4 +1,4 @@
-package com.sparta.notification.infrastructure.config;
+package com.sparta.notification.infrastructure.persistence.jpa.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sparta.notification.infrastructure.feign.decoder.FeignErrorDecoder;
