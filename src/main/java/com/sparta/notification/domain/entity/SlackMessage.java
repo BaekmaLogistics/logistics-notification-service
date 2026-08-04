@@ -22,10 +22,8 @@ public record SlackMessage(
     public static SlackMessage create(
             UUID receiverId, UUID senderId, String content
     ) {
-        if (receiverId == null || senderId == null || content == null || content.
-                isBlank()) {
-            throw new ApiException(ErrorResponseCode.INVALID_REQUEST, "수신자, 발신자, 메시지 내용은 필수입니다.");
-        }
+        validate(receiverId, senderId, content);
+        verifyContent(content);
 
         return new SlackMessage(
                 null,
@@ -76,5 +74,18 @@ public record SlackMessage(
                 this.auditInfo,
                 this.deletionInfo
         );
+    }
+
+    private static void validate(UUID receiverId, UUID senderId, String content) {
+        if (receiverId == null || senderId == null || content == null || content.
+                isBlank()) {
+            throw new ApiException(ErrorResponseCode.INVALID_REQUEST, "수신자, 발신자, 메시지 내용은 필수입니다.");
+        }
+    }
+
+    private static void verifyContent(String content) {
+        if (content.length() > 1000) {
+            throw new ApiException(ErrorResponseCode.INVALID_REQUEST, "메세지 내용은 1000자 이하 입력 가능합니다.");
+        }
     }
 }
