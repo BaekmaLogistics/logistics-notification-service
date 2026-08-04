@@ -51,7 +51,7 @@ src/main/java/com/sparta/logistics
     - 허브 서비스: `HUB_0001` (허브 미존재)
 
 ### 5. 패키지 및 메인 클래스 (선택)
-- 기본 패키지(`com.sparta.logistics`) 및 메인 실행 클래스(`LogisticsApplication.java`)를 서비스 역할에 맞게 변경/리팩토링하여 사용합니다.
+- 기본 패키지(`com.sparta.notification`) 및 메인 실행 클래스(`LogisticsApplication.java`)를 서비스 역할에 맞게 변경/리팩토링하여 사용합니다.
 
 ---
 
