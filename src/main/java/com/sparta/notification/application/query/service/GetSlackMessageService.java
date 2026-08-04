@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 import java.util.UUID;
 
 @Service
-public class GetSlackMessageService implements GetSlackMessageUseCase {
+class GetSlackMessageService implements GetSlackMessageUseCase {
     @Override
     public SlackMessageInfo getMessage(UUID slackMessageId, UUID userId) {
         return null;
