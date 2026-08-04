@@ -12,7 +12,7 @@ import java.util.UUID;
 @Service
 public class SearchSlackMessagesService implements SearchSlackMessagesUseCase {
     @Override
-    public Page<SimpleSlackMessageInfo> searchSlackMessages(
+    public Page<SimpleSlackMessageInfo> searchMessages(
             SearchSlackMessageQuery query,
             Pageable pageable,
             UUID userId

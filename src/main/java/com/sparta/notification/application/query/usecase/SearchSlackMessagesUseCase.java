@@ -8,5 +8,5 @@ import org.springframework.data.domain.Pageable;
 import java.util.UUID;
 
 public interface SearchSlackMessagesUseCase {
-    Page<SimpleSlackMessageInfo> searchSlackMessages(SearchSlackMessageQuery query, Pageable pageable, UUID userId);
+    Page<SimpleSlackMessageInfo> searchMessages(SearchSlackMessageQuery query, Pageable pageable, UUID userId);
 }

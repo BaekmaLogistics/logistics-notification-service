@@ -3,7 +3,7 @@ package com.sparta.notification.presentation.query.controller;
 import com.sparta.notification.application.query.dto.SearchSlackMessageQuery;
 import com.sparta.notification.application.query.dto.SimpleSlackMessageInfo;
 import com.sparta.notification.application.query.dto.SlackMessageInfo;
-import com.sparta.notification.application.query.usecase.GetSlackMessagesUseCase;
+import com.sparta.notification.application.query.usecase.GetSlackMessageUseCase;
 import com.sparta.notification.application.query.usecase.SearchSlackMessagesUseCase;
 import com.sparta.notification.common.code.GeneralResponseCode;
 import com.sparta.notification.presentation.common.dto.response.GeneralResponse;
@@ -30,7 +30,7 @@ import java.util.UUID;
 @RequestMapping("/api")
 public class SlackMessageQueryController {
     private final SearchSlackMessagesUseCase searchSlackMessagesUseCase;
-    private final GetSlackMessagesUseCase getSlackMessagesUseCase;
+    private final GetSlackMessageUseCase getSlackMessageUseCase;
 
     @GetMapping("/v1/slack-messages")
     public ResponseEntity<GeneralResponse<Page<SimpleSlackMessageResponse>>> searchSlackMessages(
@@ -41,7 +41,7 @@ public class SlackMessageQueryController {
         SearchSlackMessageQuery query = request.toQuery();
 
         Page<SimpleSlackMessageInfo> slackMessages =
-                searchSlackMessagesUseCase.searchSlackMessages(query, pageable, userId);
+                searchSlackMessagesUseCase.searchMessages(query, pageable, userId);
 
         return GeneralResponse.toResponseEntity(
                 GeneralResponseCode.OK, slackMessages.map(SimpleSlackMessageResponse::from)
@@ -54,7 +54,7 @@ public class SlackMessageQueryController {
             @PathVariable UUID slackMessageId
     ) {
         SlackMessageInfo slackMessage =
-                getSlackMessagesUseCase.getSlackMessage(slackMessageId, userId);
+                getSlackMessageUseCase.getMessage(slackMessageId, userId);
 
         return GeneralResponse.toResponseEntity(
                 GeneralResponseCode.OK, SlackMessageResponse.from(slackMessage)
