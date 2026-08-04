@@ -1,6 +1,7 @@
 package com.sparta.notification.presentation.common.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.sparta.notification.common.code.ApiResponseCode;
 import org.springframework.http.ResponseEntity;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)

@@ -1,4 +1,4 @@
-package com.sparta.notification.presentation.common.dto.response;
+package com.sparta.notification.common.code;
 
 
 import lombok.AllArgsConstructor;

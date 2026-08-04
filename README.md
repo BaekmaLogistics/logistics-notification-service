@@ -1,63 +1,66 @@
-# Logistics Service Template
+# 📢 Logistics Notification Service (알림 서비스)
 
-스파르타 물류 시스템(Sparta Logistics System) 마이크로서비스 작성을 위한 공통 Spring Boot 템플릿 레포지토리입니다.
+스파르타 물류 시스템(Sparta Logistics System)의 슬랙(Slack) 메시지 및 알림 처리를 담당하는 마이크로서비스입니다.
 
 ---
 
-## 🛠 주요 기술 스택 & 포함된 설정
-- **Java**: 17
-- **Framework**: Spring Boot 3.5.14
-- **Database**: PostgreSQL (Spring Data JPA)
+## 🛠 주요 기술 스택
+
+- **Core**: Java 17, Spring Boot 3.5.14
+- **Persistence**: PostgreSQL, Spring Data JPA, QueryDSL 5.1.0
+- **Messaging & Cache**: RabbitMQ (Spring AMQP), Redis (Spring Cache)
+- **Client & Tracing**: OpenFeign, Micrometer Tracing (Zipkin)
 - **API Docs**: Springdoc OpenAPI (Swagger UI)
-- **Testing**: JUnit 5, Testcontainers
 
 ---
 
 ## 📁 프로젝트 패키지 구조
+
+헥사고날/클린 아키텍처 원칙에 따라 도메인 중심의 계층 분리를 준수합니다.
+
 ```text
-src/main/java/com/sparta/logistics
-├── application/       # 비즈니스 유스케이스 / 서비스 로직
-├── domain/            # 도메인 엔티티, 리포지토리 인터페이스
-├── infrastructure/    # DB, 외부 API 연동 구현체
-└── presentation/      # Controller, DTO 및 공통 예외/응답 처리
-    └── common/
-        ├── dto/       # 공통 응답 포맷 (GeneralResponse, ErrorResponse 등)
-        └── exception/ # 공통 예외 핸들러 (GlobalExceptionHandler, ApiException)
+src/main/java/com/sparta/notification
+├── application/       # 비즈니스 유스케이스 / 애플리케이션 서비스 로직
+├── common/            # 공통 예외(ApiException), 공통 코드(ErrorResponseCode, GeneralResponseCode)
+├── domain/            # 순수 도메인 엔티티(SlackMessage), Value Objects(SlackMessageStatus, AuditInfo)
+├── infrastructure/    # JPA Persistence(SlackMessageJpaEntity), RabbitMQ, Feign, Redis 구현체
+└── presentation/      # REST Controller, Request/Response DTO, GlobalExceptionHandler
 ```
 
 ---
 
-## ⚙️ 서비스 복사 후 설정 변경 가이드 (필수)
+## 🔄 SlackMessage 도메인 생명주기 및 상태 전이 규칙
 
-새로운 마이크로서비스 생성 시 아래 파일들의 서비스/아티팩트 명칭을 각 서비스에 맞춰 수정해 주세요.
+`SlackMessage` 도메인은 **Record 기반 불변 엔티티**로 작성되어 있으며, 상태 변경 시 자율적인 유효성 검증과 함께 새로운 불변 객체를 반환합니다.
 
-### 1. `build.gradle`
-- `description`: 서비스 설명/이름 수정 (예: `description = 'user-service'`)
-- (필요시) `group` 설정 수정
+```mermaid
+stateDiagram-v2
+    [*] --> PENDING: create()
+    PENDING --> SUCCESS: complete()
+    PENDING --> FAILED: fail()
+    FAILED --> RETRYING: retry()
+    RETRYING --> SUCCESS: complete()
+    RETRYING --> FAILED: fail()
+    SUCCESS --> [*]
+```
 
-### 2. `settings.gradle`
-- `rootProject.name`: 프로젝트/아티팩트 이름 수정 (예: `rootProject.name = 'user-service'`)
+- **PENDING**: 알림 생성 완료 및 발송 대기 상태
+- **RETRYING**: 발송 실패 후 재시도 중인 상태 (재시도 횟수 `retryCount` 1 증가)
+- **SUCCESS**: 알림 발송 최종 성공 상태
+- **FAILED**: 알림 발송 최종 실패 상태
 
-### 3. `src/main/resources/application.yml`
-- `spring.application.name`: 각 서비스의 애플리케이션 이름으로 수정 (예: `spring.application.name: user-service`)
-- `spring.datasource`: 데이터베이스 접속 환경 변수 설정 (`DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`)
+---
 
-### 4. 에러 코드 (`ErrorResponseCode.java`) 컨벤션 적용
-- `src/main/java/com/sparta/logistics/presentation/common/dto/response/ErrorResponseCode.java`
-- 각 서비스에서 발생하는 예외를 구분하기 위해 서비스 접두사(Prefix) 형태의 에러 코드를 추가 정의합니다.
-  - 예시:
-    - 공통: `COMMON_0001` (서버 오류), `COMMON_0002` (잘못된 요청)
-    - 회원 서비스: `USER_0001` (사용자 없음), `USER_0002` (중복된 이메일)
-    - 허브 서비스: `HUB_0001` (허브 미존재)
+## 🛡️ 동시성 제어 및 영속성 매핑
 
-### 5. 패키지 및 메인 클래스 (선택)
-- 기본 패키지(`com.sparta.notification`) 및 메인 실행 클래스(`LogisticsApplication.java`)를 서비스 역할에 맞게 변경/리팩토링하여 사용합니다.
+- **낙관적 락(Optimistic Lock)**: `SlackMessageJpaEntity`에 `@Version` 필드를 적용하여 워커 간 동시 수정 충돌을 방지합니다.
+- **도메인 격리**: JPA 엔티티와 순수 도메인 모델 간 `createFromModel`, `updateFromModel`, `toModel`을 통한 명확한 매핑을 지원합니다.
 
 ---
 
 ## 🚀 실행 및 API 문서
 
-### 빌드 및 실행
+### 애플리케이션 실행
 ```bash
 ./gradlew bootRun
 ```
@@ -66,3 +69,4 @@ src/main/java/com/sparta/logistics
 애플리케이션 실행 후 접속 URL:
 - **Swagger UI**: `http://localhost:8080/api/api-docs`
 - **OpenAPI Spec**: `http://localhost:8080/api/api-spec`
+
