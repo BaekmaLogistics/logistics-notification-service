@@ -1,9 +1,10 @@
-package com.sparta.logistics.notification.infrastructure.persistence.jpa.entity;
+package com.sparta.logistics.notification.infrastructure.persistence.command.entity;
 
 import com.sparta.logistics.notification.domain.entity.SlackMessage;
 import com.sparta.logistics.notification.domain.model.AuditInfo;
 import com.sparta.logistics.notification.domain.model.DeletionInfo;
 import com.sparta.logistics.notification.domain.model.SlackMessageStatus;
+import com.sparta.logistics.notification.infrastructure.persistence.common.entity.BaseUpdatableJpaEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -22,7 +23,7 @@ import java.util.UUID;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "p_slack_messages")
-public class SlackMessageJpaEntity extends BaseUpdatableEntity {
+public class SlackMessageJpaEntity extends BaseUpdatableJpaEntity {
     @Column(name = "receiver_id", nullable = false, updatable = false)
     private UUID receiverId;
 
@@ -32,7 +33,7 @@ public class SlackMessageJpaEntity extends BaseUpdatableEntity {
     @Column(name = "content", nullable = false, columnDefinition = "VARCHAR(1024)")
     private String content;
 
-    @ColumnDefault(value = "PENDING")
+    @ColumnDefault(value = "'PENDING'")
     @Column(name = "status", nullable = false, columnDefinition = "VARCHAR(24)")
     @Enumerated(EnumType.STRING)
     private SlackMessageStatus status;

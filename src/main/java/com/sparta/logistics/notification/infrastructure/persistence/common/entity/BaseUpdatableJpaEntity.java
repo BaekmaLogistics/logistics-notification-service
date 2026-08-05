@@ -1,4 +1,4 @@
-package com.sparta.logistics.notification.infrastructure.persistence.jpa.entity;
+package com.sparta.logistics.notification.infrastructure.persistence.common.entity;
 
 
 import jakarta.persistence.Column;
@@ -12,7 +12,7 @@ import java.util.UUID;
 
 @MappedSuperclass
 @Getter
-public abstract class BaseUpdatableEntity extends BaseEntity {
+public abstract class BaseUpdatableJpaEntity extends BaseJpaEntity {
 
     @LastModifiedDate
     @Column(name = "updated_at")
