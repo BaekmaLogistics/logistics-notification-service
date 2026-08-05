@@ -2,10 +2,9 @@ package com.sparta.logistics.infrastructure.cache;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.jsontype.PolymorphicTypeValidator;
 import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
+import com.fasterxml.jackson.databind.jsontype.PolymorphicTypeValidator;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cache.CacheManager;
@@ -30,7 +29,7 @@ import java.time.Duration;
  * Redis를 사용하지 않는 서비스는 별도 코드 수정 없이 yml의 redis 블록만 주석 처리
  * Cache-Aside 패턴({@code @Cacheable}, {@code @CacheEvict})용 - {@link #cacheManager}
  * Sorted Set 등 자료구조를 직접 다루는 용도 - {@link #redisTemplate}
- *
+ * <p>
  * 각 도메인 별로 캐시 유지 시간 설정
  */
 
@@ -64,14 +63,14 @@ public class RedisConfig {
      * Java 8 날짜 타입을 처리하는 JavaTimeModule이 등록되어 있지 않다.
      * 우리 응답 DTO(createdAt, updatedAt 등)에는 LocalDateTime 필드가 반드시 있으므로,
      * 이 상태로 캐싱을 시도하면 InvalidDefinitionException이 발생.
-     *
+     * <p>
      * 그래서 JavaTimeModule을 명시적으로 등록한 ObjectMapper를 별도로 만들어 주입.
      * - registerModule(new JavaTimeModule()): LocalDateTime 등 직렬화/역직렬화 지원 추가
      * - disable(WRITE_DATES_AS_TIMESTAMPS): 날짜를 숫자(epoch) 대신 ISO-8601 문자열로 저장
-     *   (redis-cli로 값을 확인할 때 사람이 읽을 수 있는 형태를 유지하기 위함)
+     * (redis-cli로 값을 확인할 때 사람이 읽을 수 있는 형태를 유지하기 위함)
      * - activateDefaultTyping: JSON에 실제 클래스 정보(@class)를 같이 저장해서,
-     *   RedisTemplate<String, Object>처럼 값 타입이 Object로 선언된 경우에도
-     *   역직렬화 시 원래 클래스로 정확히 복원되도록 함
+     * RedisTemplate<String, Object>처럼 값 타입이 Object로 선언된 경우에도
+     * 역직렬화 시 원래 클래스로 정확히 복원되도록 함
      */
 //    @Bean("redisObjectMapper")
 //    public ObjectMapper redisObjectMapper() {
@@ -91,7 +90,6 @@ public class RedisConfig {
 //        );
 //        return objectMapper;
 //    }
-
     private ObjectMapper createRedisObjectMapper() {
         ObjectMapper objectMapper = new ObjectMapper();
 

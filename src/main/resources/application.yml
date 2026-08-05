@@ -1,6 +1,6 @@
 spring:
   application:
-    name: logistics
+    name: notification-service
   #  profiles:
   #    active: dev
   datasource:
