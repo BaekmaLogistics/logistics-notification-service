@@ -37,6 +37,10 @@ spring:
             read-timeout: 3000
             logger-level: basic
 
+slack:
+  api:
+    url: ${SLACK_API_URL}
+
 message:
   exchange: baekma.exchange # Producer만 적용
   queue:

@@ -5,5 +5,5 @@ import com.sparta.logistics.notification.application.command.dto.UpdateSlackMess
 import java.util.UUID;
 
 public interface UpdateSlackMessageUseCase {
-    void updateMessage(UUID slackMessageId, UpdateSlackMessageCommand command, UUID userId);
+    void update(UUID slackMessageId, UpdateSlackMessageCommand command, UUID userId);
 }

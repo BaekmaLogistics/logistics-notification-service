@@ -47,7 +47,7 @@ public class SlackMessageCommandController {
             @PathVariable UUID slackMessageId,
             @RequestBody @Valid UpdateSlackMessageRequest request
     ) {
-        updateSlackMessageUseCase.updateMessage(slackMessageId, request.toCommand(), userId);
+        updateSlackMessageUseCase.update(slackMessageId, request.toCommand(), userId);
 
         return GeneralResponse.toResponseEntity(
                 GeneralResponseCode.OK, null
@@ -59,7 +59,7 @@ public class SlackMessageCommandController {
             @AuthenticationPrincipal UUID userId,
             @PathVariable UUID slackMessageId
     ) {
-        deleteSlackMessageUseCase.deleteMessage(slackMessageId, userId);
+        deleteSlackMessageUseCase.delete(slackMessageId, userId);
 
         return GeneralResponse.toResponseEntity(
                 GeneralResponseCode.OK, null

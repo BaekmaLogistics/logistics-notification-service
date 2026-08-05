@@ -50,12 +50,12 @@ public class SlackMessageJpaEntity extends BaseUpdatableJpaEntity {
     private Long version;
 
     public static SlackMessageJpaEntity createFromModel(
-            UUID receiverId, UUID senderId, String content
+            SlackMessage slackMessage
     ) {
         return SlackMessageJpaEntity.builder()
-                .receiverId(receiverId)
-                .senderId(senderId)
-                .content(content)
+                .receiverId(slackMessage.receiverId())
+                .senderId(slackMessage.senderId())
+                .content(slackMessage.content())
                 .status(SlackMessageStatus.PENDING)
                 .retryCount(0)
                 .build();
