@@ -28,6 +28,13 @@ public abstract class BaseUpdatableJpaEntity extends BaseJpaEntity {
     @Column(name = "deleted_by")
     private UUID deletedBy;
 
+    public void updateAudit(UUID updatedBy) {
+        this.updatedAt = Instant.now();
+        if (updatedBy != null) {
+            this.updatedBy = updatedBy;
+        }
+    }
+
     public void softDelete(UUID deletedBy) {
         this.deletedAt = Instant.now();
         this.deletedBy = deletedBy;

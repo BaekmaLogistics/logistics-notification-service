@@ -27,14 +27,14 @@ class TransmitSlackMessageFacade implements TransmitSlackMessageUseCase {
             // 외부 I/O (Slack API 호출) - DB 트랜잭션 없이 백그라운드 수행
             slackClient.sendSlackMessage(slackMessage);
 
-            // 성공 시 도메인 상태 변경 (PENDING -> SUCCESS) 및 저장
-            SlackMessage completed = slackMessage.complete();
+            // 성공 시 도메인 상태 변경 (PENDING -> SUCCESS) 및 actorId(updatedBy) 반영
+            SlackMessage completed = slackMessage.complete(command.actorId());
             slackMessageCommandRepository.update(completed);
         } catch (Exception e) {
             log.error("Failed to transmit Slack message: id={}, error={}", command.slackMessageId(), e.getMessage(), e);
 
-            // 실패 시 도메인 상태 변경 (PENDING -> FAILED) 및 저장
-            SlackMessage failed = slackMessage.fail(e.getMessage());
+            // 실패 시 도메인 상태 변경 (PENDING -> FAILED) 및 actorId(updatedBy) 반영
+            SlackMessage failed = slackMessage.fail(e.getMessage(), command.actorId());
             slackMessageCommandRepository.update(failed);
             throw e;
         }

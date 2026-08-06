@@ -66,6 +66,9 @@ public class SlackMessageJpaEntity extends BaseUpdatableJpaEntity {
         this.status = slackMessage.status();
         this.retryCount = slackMessage.retryCount();
         this.errorMessage = slackMessage.errorMessage();
+        if (slackMessage.auditInfo() != null && slackMessage.auditInfo().updatedBy() != null) {
+            updateAudit(slackMessage.auditInfo().updatedBy());
+        }
     }
 
     public SlackMessage toModel() {

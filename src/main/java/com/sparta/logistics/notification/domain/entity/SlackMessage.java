@@ -35,25 +35,25 @@ public record SlackMessage(
                 0,
                 null,
                 new AuditInfo(
-                        Instant.now(), null, null, null
+                        Instant.now(), senderId, null, null
                 ),
                 null
         );
     }
 
-    public SlackMessage complete() {
-        return transitionTo(SlackMessageStatus.SUCCESS, this.errorMessage);
+    public SlackMessage complete(UUID updatedBy) {
+        return transitionTo(SlackMessageStatus.SUCCESS, this.errorMessage, updatedBy);
     }
 
-    public SlackMessage fail(String errorMessage) {
-        return transitionTo(SlackMessageStatus.FAILED, errorMessage);
+    public SlackMessage fail(String errorMessage, UUID updatedBy) {
+        return transitionTo(SlackMessageStatus.FAILED, errorMessage, updatedBy);
     }
 
-    public SlackMessage retry() {
-        return transitionTo(SlackMessageStatus.RETRYING, this.errorMessage);
+    public SlackMessage retry(UUID updatedBy) {
+        return transitionTo(SlackMessageStatus.RETRYING, this.errorMessage, updatedBy);
     }
 
-    private SlackMessage transitionTo(SlackMessageStatus targetStatus, String errorMessage) {
+    private SlackMessage transitionTo(SlackMessageStatus targetStatus, String errorMessage, UUID updatedBy) {
         if (!status.canTransitionTo(targetStatus)) {
             throw new ApiException(
                     ErrorResponseCode.INVALID_REQUEST,
@@ -66,6 +66,13 @@ public record SlackMessage(
 
         String newErrorMessage = errorMessage != null ? errorMessage : this.errorMessage;
 
+        AuditInfo newAuditInfo = new AuditInfo(
+                this.auditInfo != null ? this.auditInfo.createdAt() : Instant.now(),
+                this.auditInfo != null ? this.auditInfo.createdBy() : null,
+                Instant.now(),
+                updatedBy != null ? updatedBy : (this.auditInfo != null ? this.auditInfo.updatedBy() : null)
+        );
+
         return new SlackMessage(
                 this.id,
                 this.receiverId,
@@ -74,7 +81,7 @@ public record SlackMessage(
                 targetStatus,
                 newRetryCount,
                 newErrorMessage,
-                this.auditInfo,
+                newAuditInfo,
                 this.deletionInfo
         );
     }
