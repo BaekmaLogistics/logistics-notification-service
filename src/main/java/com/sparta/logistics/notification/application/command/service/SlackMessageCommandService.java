@@ -66,26 +66,6 @@ class SlackMessageCommandService implements UpdateSlackMessageUseCase, DeleteSla
         slackMessageCommandRepository.delete(slackMessageId, userId);
     }
 
-    @Transactional
-    public void markAsFailed(UUID slackMessageId, String errorMessage, UUID actorId) {
-        SlackMessage slackMessage = getSlackMessage(slackMessageId);
-        SlackMessage failed = slackMessage.fail(errorMessage);
-
-        SlackMessage updatedMessage = new SlackMessage(
-                failed.id(),
-                failed.receiverId(),
-                failed.senderId(),
-                failed.content(),
-                failed.status(),
-                failed.retryCount(),
-                failed.errorMessage(),
-                failed.auditInfo(),
-                failed.deletionInfo()
-        );
-
-        slackMessageCommandRepository.update(updatedMessage);
-    }
-
     @Transactional(readOnly = true)
     public SlackMessage getSlackMessage(UUID slackMessageId) {
         return slackMessageCommandRepository.findById(slackMessageId)
