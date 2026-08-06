@@ -24,6 +24,20 @@ dependencyManagement {
     }
 }
 
+def querydslDir = "src/main/generated"
+
+sourceSets {
+    main.java.srcDirs += [ querydslDir ]
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.getGeneratedSourceOutputDirectory().set(file(querydslDir))
+}
+
+clean {
+    delete file(querydslDir)
+}
+
 dependencies {
     //Spring Boot
     implementation 'org.springframework.boot:spring-boot-starter-web'
