@@ -10,7 +10,7 @@ public interface SlackMessageCommandRepository {
 
     Optional<SlackMessage> findById(UUID slackMessageId);
 
-    SlackMessage update(SlackMessage slackMessage);
+    void update(SlackMessage slackMessage);
 
     void delete(UUID slackMessageId, UUID deletedBy);
 }

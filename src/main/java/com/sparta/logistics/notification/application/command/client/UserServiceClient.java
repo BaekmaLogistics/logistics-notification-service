@@ -1,9 +1,11 @@
 package com.sparta.logistics.notification.application.command.client;
 
-import com.sparta.logistics.notification.application.command.dto.UserSlackInfo;
+import com.sparta.logistics.notification.application.command.dto.UserInfo;
 
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public interface UserServiceClient {
-    UserSlackInfo getUserSlackInfo(UUID userId);
+    Map<UUID, UserInfo> searchUserSlackInfos(List<UUID> userId);
 }

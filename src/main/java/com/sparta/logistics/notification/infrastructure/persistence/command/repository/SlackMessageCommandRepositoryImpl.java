@@ -30,13 +30,12 @@ public class SlackMessageCommandRepositoryImpl implements SlackMessageCommandRep
     }
 
     @Override
-    public SlackMessage update(SlackMessage slackMessage) {
+    public void update(SlackMessage slackMessage) {
         SlackMessageJpaEntity jpaEntity = commandJpaRepository.findById(slackMessage.id())
                 .filter(entity -> entity.getDeletedAt() == null)
                 .orElseThrow(() -> new ApiException(ErrorResponseCode.SLACK_MESSAGE_NOT_FOUND));
 
         jpaEntity.updateFromModel(slackMessage);
-        return jpaEntity.toModel();
     }
 
     @Override

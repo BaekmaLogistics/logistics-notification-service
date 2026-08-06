@@ -1,7 +1,9 @@
 package com.sparta.logistics.notification.application.command.service;
 
+import com.sparta.logistics.notification.application.command.client.UserServiceClient;
 import com.sparta.logistics.notification.application.command.dto.SendSlackMessageCommand;
 import com.sparta.logistics.notification.application.command.dto.UpdateSlackMessageCommand;
+import com.sparta.logistics.notification.application.command.dto.UserInfo;
 import com.sparta.logistics.notification.application.command.usecase.DeleteSlackMessageUseCase;
 import com.sparta.logistics.notification.application.command.usecase.UpdateSlackMessageUseCase;
 import com.sparta.logistics.notification.common.code.ErrorResponseCode;
@@ -12,22 +14,33 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 class SlackMessageCommandService implements UpdateSlackMessageUseCase, DeleteSlackMessageUseCase {
     private final SlackMessageCommandRepository slackMessageCommandRepository;
+    private final UserServiceClient userServiceClient;
 
     @Transactional
-    public SlackMessage append(SendSlackMessageCommand command, UUID userId) {
+    public SlackMessage append(SendSlackMessageCommand command, UUID senderId) {
+        Map<UUID, UserInfo> userInfos = userServiceClient
+                .searchUserSlackInfos(List.of(command.receiverId(), senderId));
 
+        UserInfo receiverInfo = userInfos.get(command.receiverId());
+        UserInfo senderInfo = userInfos.get(senderId);
+
+        if (receiverInfo == null || senderInfo == null) {
+            throw new ApiException(ErrorResponseCode.FEIGN_CLIENT_ERROR, "수신자 또는 발신자의 유저 정보를 찾을 수 없습니다.");
+        }
 
         SlackMessage slackMessage = SlackMessage.create(
                 command.receiverId(),
-                null,
-                userId,
-                null,
+                receiverInfo.slackId(),
+                senderId,
+                senderInfo.slackId(),
                 command.content()
         );
 

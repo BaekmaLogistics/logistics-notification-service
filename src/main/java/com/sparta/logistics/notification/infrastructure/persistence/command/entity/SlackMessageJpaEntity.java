@@ -60,7 +60,9 @@ public class SlackMessageJpaEntity extends BaseUpdatableJpaEntity {
     ) {
         return SlackMessageJpaEntity.builder()
                 .receiverId(slackMessage.receiverId())
+                .receiverSlackId(slackMessage.receiverSlackId())
                 .senderId(slackMessage.senderId())
+                .senderSlackId(slackMessage.senderSlackId())
                 .content(slackMessage.content())
                 .status(SlackMessageStatus.PENDING)
                 .retryCount(0)
@@ -72,6 +74,12 @@ public class SlackMessageJpaEntity extends BaseUpdatableJpaEntity {
         this.status = slackMessage.status();
         this.retryCount = slackMessage.retryCount();
         this.errorMessage = slackMessage.errorMessage();
+        if (slackMessage.receiverSlackId() != null) {
+            this.receiverSlackId = slackMessage.receiverSlackId();
+        }
+        if (slackMessage.senderSlackId() != null) {
+            this.senderSlackId = slackMessage.senderSlackId();
+        }
         if (slackMessage.auditInfo() != null && slackMessage.auditInfo().updatedBy() != null) {
             updateAudit(slackMessage.auditInfo().updatedBy());
         }
