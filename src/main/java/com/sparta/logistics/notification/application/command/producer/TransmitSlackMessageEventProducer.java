@@ -5,5 +5,5 @@ import com.sparta.logistics.notification.application.command.dto.SendSlackMessag
 import java.util.UUID;
 
 public interface TransmitSlackMessageEventProducer {
-    void produce(SendSlackMessageCommand command, UUID userId);
+    void produce(SendSlackMessageCommand command, UUID slackMessageId,UUID userId);
 }

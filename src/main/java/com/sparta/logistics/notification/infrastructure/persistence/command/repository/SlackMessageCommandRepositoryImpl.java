@@ -12,9 +12,9 @@ public class SlackMessageCommandRepositoryImpl implements SlackMessageCommandRep
     private final SlackMessageCommandJpaRepository commandJpaRepository;
 
     @Override
-    public void append(SlackMessage slackMessage) {
+    public SlackMessage append(SlackMessage slackMessage) {
         SlackMessageJpaEntity jpaEntity = SlackMessageJpaEntity.createFromModel(slackMessage);
 
-        commandJpaRepository.save(jpaEntity);
+        return commandJpaRepository.save(jpaEntity).toModel();
     }
 }

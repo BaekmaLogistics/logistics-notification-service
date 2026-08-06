@@ -18,14 +18,14 @@ class SlackMessageCommandService implements UpdateSlackMessageUseCase, DeleteSla
     private final SlackMessageCommandRepository slackMessageCommandRepository;
 
     @Transactional
-    public void append(SendSlackMessageCommand command, UUID userId) {
+    public SlackMessage append(SendSlackMessageCommand command, UUID userId) {
         SlackMessage slackMessage = SlackMessage.create(
                 command.receiverId(),
                 userId,
                 command.content()
         );
 
-        slackMessageCommandRepository.append(slackMessage);
+        return slackMessageCommandRepository.append(slackMessage);
     }
 
     @Override
@@ -36,5 +36,11 @@ class SlackMessageCommandService implements UpdateSlackMessageUseCase, DeleteSla
     @Override
     @Transactional
     public void delete(UUID slackMessageId, UUID userId) {
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public SlackMessage getSlackMessage(UUID slackMessageId) {
+        return null;
     }
 }

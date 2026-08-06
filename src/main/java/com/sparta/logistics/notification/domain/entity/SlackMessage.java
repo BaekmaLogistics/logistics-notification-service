@@ -6,6 +6,7 @@ import com.sparta.logistics.notification.domain.model.AuditInfo;
 import com.sparta.logistics.notification.domain.model.DeletionInfo;
 import com.sparta.logistics.notification.domain.model.SlackMessageStatus;
 
+import java.time.Instant;
 import java.util.UUID;
 
 public record SlackMessage(
@@ -33,7 +34,9 @@ public record SlackMessage(
                 SlackMessageStatus.PENDING,
                 0,
                 null,
-                null,
+                new AuditInfo(
+                        Instant.now(), null, null, null
+                ),
                 null
         );
     }
