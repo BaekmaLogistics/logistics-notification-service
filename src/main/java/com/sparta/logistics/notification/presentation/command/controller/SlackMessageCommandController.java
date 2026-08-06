@@ -34,7 +34,7 @@ public class SlackMessageCommandController {
             @AuthenticationPrincipal UUID userId,
             @RequestBody @Valid SendSlackMessageRequest request
     ) {
-        sendSlackMessageUseCase.sendMessage(request.toCommand(), userId);
+        sendSlackMessageUseCase.sendMessage(request.toCommand(userId), userId);
 
         return GeneralResponse.toResponseEntity(
                 GeneralResponseCode.ACCEPTED, null

@@ -5,5 +5,5 @@ import com.sparta.logistics.notification.application.query.dto.SlackMessageInfo;
 import java.util.UUID;
 
 public interface GetSlackMessageUseCase {
-    SlackMessageInfo getMessage(UUID slackMessageId, UUID userId);
+    SlackMessageInfo getSlackMessage(UUID slackMessageId, UUID userId);
 }

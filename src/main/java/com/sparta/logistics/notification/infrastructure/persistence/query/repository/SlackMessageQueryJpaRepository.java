@@ -7,5 +7,5 @@ import org.springframework.stereotype.Repository;
 import java.util.UUID;
 
 @Repository
-public interface SlackMessageQueryJpaRepository extends JpaRepository<SlackMessageJpaEntity, UUID> {
+interface SlackMessageQueryJpaRepository extends JpaRepository<SlackMessageJpaEntity, UUID> {
 }
