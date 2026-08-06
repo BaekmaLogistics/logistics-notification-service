@@ -29,14 +29,10 @@ public record SlackMessage(
         verifyContent(content);
 
         return new SlackMessage(
-                null,
-                receiverId,
-                receiverSlackId,
-                senderId,
-                senderSlackId,
-                content,
-                SlackMessageStatus.PENDING,
-                0,
+                null, receiverId,
+                receiverSlackId, senderId,
+                senderSlackId, content,
+                SlackMessageStatus.PENDING, 0,
                 null,
                 new AuditInfo(
                         Instant.now(), senderId, null, null
@@ -46,18 +42,24 @@ public record SlackMessage(
     }
 
     public SlackMessage complete(UUID updatedBy) {
-        return transitionTo(SlackMessageStatus.SUCCESS, this.errorMessage, updatedBy);
+        return transitionTo(SlackMessageStatus.SUCCESS, updatedBy);
+    }
+
+    public SlackMessage process(UUID updatedBy) {
+        return transitionTo(SlackMessageStatus.PROCESSING, updatedBy);
     }
 
     public SlackMessage fail(String errorMessage, UUID updatedBy) {
-        return transitionTo(SlackMessageStatus.FAILED, errorMessage, updatedBy);
+        return transitionTo(SlackMessageStatus.FAILED, updatedBy)
+                .updateErrorMessage(errorMessage);
     }
 
     public SlackMessage retry(UUID updatedBy) {
-        return transitionTo(SlackMessageStatus.RETRYING, this.errorMessage, updatedBy);
+        return transitionTo(SlackMessageStatus.RETRYING, updatedBy)
+                .increaseRetryCount();
     }
 
-    private SlackMessage transitionTo(SlackMessageStatus targetStatus, String errorMessage, UUID updatedBy) {
+    private SlackMessage transitionTo(SlackMessageStatus targetStatus, UUID updatedBy) {
         if (!status.canTransitionTo(targetStatus)) {
             throw new ApiException(
                     ErrorResponseCode.INVALID_REQUEST,
@@ -65,29 +67,36 @@ public record SlackMessage(
             );
         }
 
-        int newRetryCount = targetStatus == SlackMessageStatus.RETRYING ? this.retryCount + 1
-                : this.retryCount;
-
-        String newErrorMessage = errorMessage != null ? errorMessage : this.errorMessage;
-
-        AuditInfo newAuditInfo = new AuditInfo(
-                this.auditInfo != null ? this.auditInfo.createdAt() : Instant.now(),
-                this.auditInfo != null ? this.auditInfo.createdBy() : null,
-                Instant.now(),
-                updatedBy != null ? updatedBy : (this.auditInfo != null ? this.auditInfo.updatedBy() : null)
-        );
+        AuditInfo newAuditInfo = (this.auditInfo != null) ? this.auditInfo.withUpdatedBy(updatedBy) : null;
 
         return new SlackMessage(
-                this.id,
-                this.receiverId,
-                this.receiverSlackId,
-                this.senderId,
-                this.senderSlackId,
-                this.content,
-                targetStatus,
-                newRetryCount,
-                newErrorMessage,
-                newAuditInfo,
+                this.id, this.receiverId,
+                this.receiverSlackId, this.senderId,
+                this.senderSlackId, this.content,
+                targetStatus, this.retryCount,
+                this.errorMessage, newAuditInfo,
+                this.deletionInfo
+        );
+    }
+
+    private SlackMessage increaseRetryCount() {
+        return new SlackMessage(
+                this.id, this.receiverId,
+                this.receiverSlackId, this.senderId,
+                this.senderSlackId, this.content,
+                this.status, this.retryCount + 1,
+                this.errorMessage, this.auditInfo,
+                this.deletionInfo
+        );
+    }
+
+    private SlackMessage updateErrorMessage(String errorMessage) {
+        return new SlackMessage(
+                this.id, this.receiverId,
+                this.receiverSlackId, this.senderId,
+                this.senderSlackId, this.content,
+                this.status, this.retryCount,
+                errorMessage, this.auditInfo,
                 this.deletionInfo
         );
     }
