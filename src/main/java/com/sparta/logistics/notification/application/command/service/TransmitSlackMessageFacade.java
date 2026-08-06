@@ -2,11 +2,9 @@ package com.sparta.logistics.notification.application.command.service;
 
 import com.sparta.logistics.notification.application.command.client.SlackClient;
 import com.sparta.logistics.notification.application.command.dto.TransmitSlackMessageCommand;
+import com.sparta.logistics.notification.application.command.producer.TransmitSlackMessageEventProducer;
 import com.sparta.logistics.notification.application.command.usecase.TransmitSlackMessageUseCase;
-import com.sparta.logistics.notification.common.code.ErrorResponseCode;
-import com.sparta.logistics.notification.common.exception.ApiException;
 import com.sparta.logistics.notification.domain.entity.SlackMessage;
-import com.sparta.logistics.notification.domain.repository.SlackMessageCommandRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -15,27 +13,44 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 class TransmitSlackMessageFacade implements TransmitSlackMessageUseCase {
-    private final SlackMessageCommandRepository slackMessageCommandRepository;
+    private final SlackMessageCommandService slackMessageCommandService;
     private final SlackClient slackClient;
+    private final TransmitSlackMessageEventProducer transmitSlackMessageEventProducer;
+
+    private static final int MAX_RETRY_COUNT = 3;
 
     @Override
     public void transmit(TransmitSlackMessageCommand command) {
-        SlackMessage slackMessage = slackMessageCommandRepository.findById(command.slackMessageId())
-                .orElseThrow(() -> new ApiException(ErrorResponseCode.SLACK_MESSAGE_NOT_FOUND));
+        // PENDING 또는 RETRYING -> PROCESSING (멱등성 락 획득)
+        SlackMessage slackMessage = slackMessageCommandService.updateStatusToProcessing(
+                command.slackMessageId(), command.actorId()
+        );
 
         try {
-            // 외부 I/O (Slack API 호출) - DB 트랜잭션 없이 백그라운드 수행
-            slackClient.sendSlackMessage(slackMessage);
+            // 외부 API 호출
+            slackClient.transmitSlackMessage(slackMessage);
 
-            // 성공 시 도메인 상태 변경 (PENDING -> SUCCESS) 및 actorId(updatedBy) 반영
-            SlackMessage completed = slackMessage.complete(command.actorId());
-            slackMessageCommandRepository.update(completed);
+            // 성공 시 PROCESSING -> SUCCESS 갱신
+            slackMessageCommandService.updateStatusToSuccess(command.slackMessageId(), command.actorId());
+
         } catch (Exception e) {
-            log.error("Failed to transmit Slack message: id={}, error={}", command.slackMessageId(), e.getMessage(), e);
+            log.warn("Failed to transmit Slack message: id={}, retryCount={}, error={}",
+                    command.slackMessageId(), slackMessage.retryCount(), e.getMessage());
 
-            // 실패 시 도메인 상태 변경 (PENDING -> FAILED) 및 actorId(updatedBy) 반영
-            SlackMessage failed = slackMessage.fail(e.getMessage(), command.actorId());
-            slackMessageCommandRepository.update(failed);
+            if (slackMessage.retryCount() < MAX_RETRY_COUNT) {
+                // PROCESSING -> RETRYING 갱신 (retryCount + 1)
+                slackMessageCommandService.updateStatusToRetrying(command.slackMessageId(), command.actorId());
+
+                // 이벤트 재발급
+                transmitSlackMessageEventProducer.produce(
+                        slackMessage.id(),
+                        command.actorId()
+                );
+            } else {
+                // PROCESSING -> FAILED 갱신
+                slackMessageCommandService.updateStatusToFailed(command.slackMessageId(), e.getMessage(), command.actorId());
+            }
+
             throw e;
         }
     }

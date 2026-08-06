@@ -9,6 +9,7 @@ import com.sparta.logistics.notification.application.command.usecase.UpdateSlack
 import com.sparta.logistics.notification.common.code.ErrorResponseCode;
 import com.sparta.logistics.notification.common.exception.ApiException;
 import com.sparta.logistics.notification.domain.entity.SlackMessage;
+import com.sparta.logistics.notification.domain.model.SlackMessageStatus;
 import com.sparta.logistics.notification.domain.repository.SlackMessageCommandRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -45,6 +46,44 @@ class SlackMessageCommandService implements UpdateSlackMessageUseCase, DeleteSla
         );
 
         return slackMessageCommandRepository.append(slackMessage);
+    }
+
+    @Transactional
+    public SlackMessage updateStatusToProcessing(UUID slackMessageId, UUID actorId) {
+        SlackMessage slackMessage = getSlackMessage(slackMessageId);
+
+        if (slackMessage.status() == SlackMessageStatus.SUCCESS) {
+            throw new ApiException(ErrorResponseCode.INVALID_REQUEST, "이미 전송된 메세지입니다.");
+        }
+
+        if (slackMessage.status() == SlackMessageStatus.PROCESSING) {
+            throw new ApiException(ErrorResponseCode.INVALID_REQUEST, "이미 처리 중인 메세지입니다.");
+        }
+
+        SlackMessage processing = slackMessage.process(actorId);
+        slackMessageCommandRepository.update(processing);
+        return processing;
+    }
+
+    @Transactional
+    public void updateStatusToSuccess(UUID slackMessageId, UUID actorId) {
+        SlackMessage slackMessage = getSlackMessage(slackMessageId);
+        SlackMessage completed = slackMessage.complete(actorId);
+        slackMessageCommandRepository.update(completed);
+    }
+
+    @Transactional
+    public void updateStatusToRetrying(UUID slackMessageId, UUID actorId) {
+        SlackMessage slackMessage = getSlackMessage(slackMessageId);
+        SlackMessage retrying = slackMessage.retry(actorId);
+        slackMessageCommandRepository.update(retrying);
+    }
+
+    @Transactional
+    public void updateStatusToFailed(UUID slackMessageId, String errorMessage, UUID actorId) {
+        SlackMessage slackMessage = getSlackMessage(slackMessageId);
+        SlackMessage failed = slackMessage.fail(errorMessage, actorId);
+        slackMessageCommandRepository.update(failed);
     }
 
     @Override

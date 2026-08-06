@@ -39,7 +39,7 @@ src/main/java/com/sparta/logistics/notification
 | `receiver_id` | `UUID` | **NOT NULL** | - | 수신자 ID |
 | `sender_id` | `UUID` | **NOT NULL** | - | 발신자/요청자 ID |
 | `content` | `VARCHAR(1024)` | **NOT NULL** | - | 슬랙 메시지 본문 내용 |
-| `status` | `VARCHAR(24)` | **NOT NULL** | DEFAULT `'PENDING'` | 메시지 상태 (`PENDING`, `SUCCESS`, `FAILED`, `RETRYING`) |
+| `status` | `VARCHAR(24)` | **NOT NULL** | DEFAULT `'PENDING'` | 메시지 상태 (`PENDING`, `PROCESSING`, `SUCCESS`, `FAILED`, `RETRYING`) |
 | `retry_count` | `INTEGER` | **NOT NULL** | DEFAULT `0` | 발송 재시도 횟수 |
 | `error_message` | `VARCHAR(128)` | NULL | - | 발송 실패 시 예외 메시지 |
 | `version` | `BIGINT` | NULL | `@Version` | 낙관적 락(Optimistic Lock) 버저닝 컬럼 |
@@ -54,23 +54,25 @@ src/main/java/com/sparta/logistics/notification
 
 ## 🔄 SlackMessage 도메인 생명주기 및 상태 전이 규칙
 
-`SlackMessage` 도메인은 **Record 기반 불변 엔티티**로 작성되어 있으며, 상태 변경 시 자율적인 유효성 검증과 함께 새로운 불변 객체를 반환합니다.
+`SlackMessage` 도메인은 **Record 기반 불변 엔티티**로 작성되어 있으며, 분산 환경에서의 **멱등성(Idempotency) 보장 및 중복 발송 차단**을 위해 `PROCESSING` 락 상태를 보유합니다.
 
 ```mermaid
 stateDiagram-v2
     [*] --> PENDING: create()
-    PENDING --> SUCCESS: complete()
-    PENDING --> FAILED: fail()
-    FAILED --> RETRYING: retry()
-    RETRYING --> SUCCESS: complete()
-    RETRYING --> FAILED: fail()
+    PENDING --> PROCESSING: process()
+    RETRYING --> PROCESSING: process()
+    PROCESSING --> SUCCESS: complete()
+    PROCESSING --> RETRYING: retry()
+    PROCESSING --> FAILED: fail()
     SUCCESS --> [*]
+    FAILED --> [*]
 ```
 
-- **PENDING**: 알림 생성 완료 및 발송 대기 상태
-- **RETRYING**: 발송 실패 후 재시도 중인 상태 (재시도 횟수 `retryCount` 1 증가)
-- **SUCCESS**: 알림 발송 최종 성공 상태
-- **FAILED**: 알림 발송 최종 실패 상태
+- **PENDING**: 알림 메시지 생성 완료 및 발송 대기 상태
+- **PROCESSING**: 전송 진행 중 상태 (중복 발송 방지 및 멱등성 락 역할)
+- **RETRYING**: 전송 실패 후 재시도 대기 상태 (재시도 횟수 `retryCount` 1 증가)
+- **SUCCESS**: 알림 발송 최종 성공 상태 (종결 상태)
+- **FAILED**: 최대 재시도 횟수 소진 등으로 인한 최종 발송 실패 상태 (종결 상태)
 
 ---
 
