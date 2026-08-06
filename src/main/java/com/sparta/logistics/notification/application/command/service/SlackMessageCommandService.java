@@ -4,6 +4,8 @@ import com.sparta.logistics.notification.application.command.dto.SendSlackMessag
 import com.sparta.logistics.notification.application.command.dto.UpdateSlackMessageCommand;
 import com.sparta.logistics.notification.application.command.usecase.DeleteSlackMessageUseCase;
 import com.sparta.logistics.notification.application.command.usecase.UpdateSlackMessageUseCase;
+import com.sparta.logistics.notification.common.code.ErrorResponseCode;
+import com.sparta.logistics.notification.common.exception.ApiException;
 import com.sparta.logistics.notification.domain.entity.SlackMessage;
 import com.sparta.logistics.notification.domain.repository.SlackMessageCommandRepository;
 import lombok.RequiredArgsConstructor;
@@ -31,16 +33,62 @@ class SlackMessageCommandService implements UpdateSlackMessageUseCase, DeleteSla
     @Override
     @Transactional
     public void update(UUID slackMessageId, UpdateSlackMessageCommand command, UUID userId) {
+        SlackMessage slackMessage = getSlackMessage(slackMessageId);
+
+        if (!slackMessage.senderId().equals(userId)) {
+            throw new ApiException(ErrorResponseCode.INVALID_REQUEST, "본인이 작성한 메시지만 수정할 수 있습니다.");
+        }
+
+        SlackMessage updatedMessage = new SlackMessage(
+                slackMessage.id(),
+                slackMessage.receiverId(),
+                slackMessage.senderId(),
+                command.content(),
+                slackMessage.status(),
+                slackMessage.retryCount(),
+                slackMessage.errorMessage(),
+                slackMessage.auditInfo(),
+                slackMessage.deletionInfo()
+        );
+
+        slackMessageCommandRepository.update(updatedMessage);
     }
 
     @Override
     @Transactional
     public void delete(UUID slackMessageId, UUID userId) {
+        SlackMessage slackMessage = getSlackMessage(slackMessageId);
+
+        if (!slackMessage.senderId().equals(userId)) {
+            throw new ApiException(ErrorResponseCode.INVALID_REQUEST, "본인이 작성한 메시지만 삭제할 수 있습니다.");
+        }
+
+        slackMessageCommandRepository.delete(slackMessageId, userId);
     }
 
-    @Override
+    @Transactional
+    public void markAsFailed(UUID slackMessageId, String errorMessage, UUID actorId) {
+        SlackMessage slackMessage = getSlackMessage(slackMessageId);
+        SlackMessage failed = slackMessage.fail(errorMessage);
+
+        SlackMessage updatedMessage = new SlackMessage(
+                failed.id(),
+                failed.receiverId(),
+                failed.senderId(),
+                failed.content(),
+                failed.status(),
+                failed.retryCount(),
+                failed.errorMessage(),
+                failed.auditInfo(),
+                failed.deletionInfo()
+        );
+
+        slackMessageCommandRepository.update(updatedMessage);
+    }
+
     @Transactional(readOnly = true)
     public SlackMessage getSlackMessage(UUID slackMessageId) {
-        return null;
+        return slackMessageCommandRepository.findById(slackMessageId)
+                .orElseThrow(() -> new ApiException(ErrorResponseCode.SLACK_MESSAGE_NOT_FOUND));
     }
 }
