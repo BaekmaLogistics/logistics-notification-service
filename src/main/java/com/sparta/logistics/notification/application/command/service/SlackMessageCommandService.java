@@ -21,9 +21,13 @@ class SlackMessageCommandService implements UpdateSlackMessageUseCase, DeleteSla
 
     @Transactional
     public SlackMessage append(SendSlackMessageCommand command, UUID userId) {
+
+
         SlackMessage slackMessage = SlackMessage.create(
                 command.receiverId(),
+                null,
                 userId,
+                null,
                 command.content()
         );
 
@@ -42,7 +46,9 @@ class SlackMessageCommandService implements UpdateSlackMessageUseCase, DeleteSla
         SlackMessage updatedMessage = new SlackMessage(
                 slackMessage.id(),
                 slackMessage.receiverId(),
+                command.receiverSlackId(),
                 slackMessage.senderId(),
+                command.senderSlackId(),
                 command.content(),
                 slackMessage.status(),
                 slackMessage.retryCount(),

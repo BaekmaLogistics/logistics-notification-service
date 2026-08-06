@@ -12,7 +12,9 @@ import java.util.UUID;
 public record SlackMessage(
         UUID id,
         UUID receiverId,
+        String receiverSlackId,
         UUID senderId,
+        String senderSlackId,
         String content,
         SlackMessageStatus status,
         int retryCount,
@@ -21,7 +23,7 @@ public record SlackMessage(
         DeletionInfo deletionInfo
 ) {
     public static SlackMessage create(
-            UUID receiverId, UUID senderId, String content
+            UUID receiverId, String receiverSlackId, UUID senderId, String senderSlackId, String content
     ) {
         validate(receiverId, senderId, content);
         verifyContent(content);
@@ -29,7 +31,9 @@ public record SlackMessage(
         return new SlackMessage(
                 null,
                 receiverId,
+                receiverSlackId,
                 senderId,
+                senderSlackId,
                 content,
                 SlackMessageStatus.PENDING,
                 0,
@@ -76,7 +80,9 @@ public record SlackMessage(
         return new SlackMessage(
                 this.id,
                 this.receiverId,
+                this.receiverSlackId,
                 this.senderId,
+                this.senderSlackId,
                 this.content,
                 targetStatus,
                 newRetryCount,

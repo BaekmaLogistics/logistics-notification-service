@@ -27,8 +27,14 @@ public class SlackMessageJpaEntity extends BaseUpdatableJpaEntity {
     @Column(name = "receiver_id", nullable = false, updatable = false)
     private UUID receiverId;
 
-    @Column(name = "sender_id", nullable = false, updatable = false)
+    @Column(name = "receiver_slack_id", nullable = false)
+    private String receiverSlackId;
+
+    @Column(name = "sender_id", updatable = false)
     private UUID senderId;
+
+    @Column(name = "sender_slack_id")
+    private String senderSlackId;
 
     @Column(name = "content", nullable = false, columnDefinition = "VARCHAR(1024)")
     private String content;
@@ -75,7 +81,9 @@ public class SlackMessageJpaEntity extends BaseUpdatableJpaEntity {
         return new SlackMessage(
                 getId(),
                 receiverId,
+                receiverSlackId,
                 senderId,
+                senderSlackId,
                 content,
                 status,
                 retryCount,
@@ -92,13 +100,17 @@ public class SlackMessageJpaEntity extends BaseUpdatableJpaEntity {
     @Builder
     private SlackMessageJpaEntity(
             UUID receiverId,
+            String receiverSlackId,
             UUID senderId,
+            String senderSlackId,
             String content,
             SlackMessageStatus status,
             int retryCount
     ) {
         this.receiverId = receiverId;
+        this.receiverSlackId = receiverSlackId;
         this.senderId = senderId;
+        this.senderSlackId = senderSlackId;
         this.content = content;
         this.status = status;
         this.retryCount = retryCount;
