@@ -41,6 +41,10 @@ slack:
   api:
     url: ${SLACK_API_URL}
 
+user:
+  service:
+    url: ${USER_SERVICE_URL:}
+
 message:
   exchange: baekma.exchange # Producer만 적용
   queue:
