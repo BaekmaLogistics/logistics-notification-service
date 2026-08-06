@@ -52,7 +52,9 @@ resilience4j:
 
 slack:
   api:
-    url: ${SLACK_API_URL}
+    url: ${SLACK_API_URL:https://slack.com/api}
+  bot:
+    token: ${SLACK_BOT_TOKEN}
 
 message:
   exchange: baekma.exchange # Producer만 적용
