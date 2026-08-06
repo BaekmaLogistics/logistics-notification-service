@@ -18,8 +18,6 @@ class TransmitSlackMessageFacade implements TransmitSlackMessageUseCase {
 
     @Override
     public void transmit(TransmitSlackMessageCommand command) {
-        // API Controller 호출과 시스템 호출 둘 다 받아야 함..
-
         try {
             SlackMessage slackMessage = slackMessageCommandService.getSlackMessage(command.slackMessageId());
 
@@ -36,8 +34,8 @@ class TransmitSlackMessageFacade implements TransmitSlackMessageUseCase {
                     command.actorId()
             );
         } catch (Exception e) {
-            log.error("Failed to transmit Slack message: {}", e.getMessage(), e);
-            // TODO: 실패 시 DB 상태 업데이트 (slackMessageCommandService내 @Transactional 적용 메서드 호출)
+            log.error("Failed to transmit Slack message: id={}, error={}", command.slackMessageId(), e.getMessage(), e);
+            slackMessageCommandService.markAsFailed(command.slackMessageId(), e.getMessage(), command.actorId());
             throw e;
         }
     }
