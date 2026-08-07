@@ -50,8 +50,6 @@ class TransmitSlackMessageFacade implements TransmitSlackMessageUseCase {
                 // PROCESSING -> FAILED 갱신
                 slackMessageCommandService.updateStatusToFailed(command.slackMessageId(), e.getMessage(), command.actorId());
             }
-
-            throw e;
         }
     }
 }
