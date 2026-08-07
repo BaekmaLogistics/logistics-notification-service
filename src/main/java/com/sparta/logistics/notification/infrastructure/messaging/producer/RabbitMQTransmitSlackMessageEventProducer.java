@@ -1,6 +1,5 @@
 package com.sparta.logistics.notification.infrastructure.messaging.producer;
 
-import com.sparta.logistics.notification.application.command.dto.SendSlackMessageCommand;
 import com.sparta.logistics.notification.application.command.producer.TransmitSlackMessageEventProducer;
 import com.sparta.logistics.notification.infrastructure.messaging.envelope.EventEnvelope;
 import com.sparta.logistics.notification.infrastructure.messaging.event.TransmitSlackMessagePayload;
