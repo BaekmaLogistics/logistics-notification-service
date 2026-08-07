@@ -1,4 +1,4 @@
-package com.sparta.logistics.notification.infrastructure.persistence.jpa.entity;
+package com.sparta.logistics.notification.infrastructure.persistence.common.entity;
 
 
 import jakarta.persistence.Column;
@@ -18,7 +18,7 @@ import java.util.UUID;
 @MappedSuperclass
 @Getter
 @EntityListeners(AuditingEntityListener.class)
-public abstract class BaseEntity {
+public abstract class BaseJpaEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

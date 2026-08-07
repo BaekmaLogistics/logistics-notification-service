@@ -10,8 +10,10 @@ public enum ErrorResponseCode implements ApiResponseCode {
     // Common
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR,"COMMON_0001", "알 수 없는 오류가 발생했습니다."),
     INVALID_REQUEST(HttpStatus.BAD_REQUEST, "COMMON_0002","유효하지 않은 요청입니다."),
-    FEIGN_CLIENT_ERROR(HttpStatus.BAD_GATEWAY, "COMMON_0003", "Feign 통신 중 오류가 발생했습니다.");
+    FEIGN_CLIENT_ERROR(HttpStatus.BAD_GATEWAY, "COMMON_0003", "Feign 통신 중 오류가 발생했습니다."),
 
+    // Slack Message
+    SLACK_MESSAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "SLACK_0001", "해당하는 Slack 메세지를 찾을 수 없습니다.");
 
     private final HttpStatus status;
     private final String errorCode;

@@ -9,4 +9,8 @@ public record AuditInfo(
         Instant updatedAt,
         UUID updatedBy
 ) {
+    public AuditInfo withUpdatedBy(UUID updatedBy) {
+        return new AuditInfo(this.createdAt, this.createdBy, Instant.now(),
+                updatedBy);
+    }
 }

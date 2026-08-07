@@ -14,9 +14,10 @@ public record SendSlackMessageRequest(
         @Size(max = 1000, message = "메세지 내용은 1000자 이하 입력 가능합니다.")
         String content
 ) {
-    public SendSlackMessageCommand toCommand() {
+    public SendSlackMessageCommand toCommand(UUID senderId) {
         return new SendSlackMessageCommand(
                 this.receiverId,
+                senderId,
                 this.content
         );
     }

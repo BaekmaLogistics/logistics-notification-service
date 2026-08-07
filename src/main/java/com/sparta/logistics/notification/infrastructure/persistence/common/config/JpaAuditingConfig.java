@@ -1,4 +1,4 @@
-package com.sparta.logistics.notification.infrastructure.persistence.jpa.config;
+package com.sparta.logistics.notification.infrastructure.persistence.common.config;
 
 import com.sparta.logistics.notification.presentation.common.constant.HeaderConstants;
 import jakarta.servlet.http.HttpServletRequest;

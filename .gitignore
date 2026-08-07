@@ -41,6 +41,8 @@ local.properties
 # Tern plugin
 .tern-project
 
+application-*.yml
+
 # TeXlipse plugin
 .texlipse
 

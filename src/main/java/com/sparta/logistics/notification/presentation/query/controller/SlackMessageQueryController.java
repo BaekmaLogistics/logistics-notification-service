@@ -54,7 +54,7 @@ public class SlackMessageQueryController {
             @PathVariable UUID slackMessageId
     ) {
         SlackMessageInfo slackMessage =
-                getSlackMessageUseCase.getMessage(slackMessageId, userId);
+                getSlackMessageUseCase.getSlackMessage(slackMessageId, userId);
 
         return GeneralResponse.toResponseEntity(
                 GeneralResponseCode.OK, SlackMessageResponse.from(slackMessage)

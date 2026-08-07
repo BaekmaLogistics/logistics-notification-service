@@ -24,6 +24,20 @@ dependencyManagement {
     }
 }
 
+def querydslDir = "src/main/generated"
+
+sourceSets {
+    main.java.srcDirs += [ querydslDir ]
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.getGeneratedSourceOutputDirectory().set(file(querydslDir))
+}
+
+clean {
+    delete file(querydslDir)
+}
+
 dependencies {
     //Spring Boot
     implementation 'org.springframework.boot:spring-boot-starter-web'
@@ -35,6 +49,8 @@ dependencies {
 
     //OpenFeign
     implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
+    implementation 'org.springframework.cloud:spring-cloud-starter-loadbalancer'
+    implementation 'org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j'
 
     //QueryDSL
     implementation "com.querydsl:querydsl-jpa:5.1.0:jakarta"
@@ -44,6 +60,7 @@ dependencies {
 
     //Micrometer Tracing
     implementation 'io.micrometer:micrometer-tracing-bridge-brave'
+    implementation 'io.github.openfeign:feign-micrometer'
 
     //Zipkin
     implementation 'io.zipkin.reporter2:zipkin-reporter-brave'

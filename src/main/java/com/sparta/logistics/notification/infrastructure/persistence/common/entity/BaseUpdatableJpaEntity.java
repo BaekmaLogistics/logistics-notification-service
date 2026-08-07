@@ -1,4 +1,4 @@
-package com.sparta.logistics.notification.infrastructure.persistence.jpa.entity;
+package com.sparta.logistics.notification.infrastructure.persistence.common.entity;
 
 
 import jakarta.persistence.Column;
@@ -12,7 +12,7 @@ import java.util.UUID;
 
 @MappedSuperclass
 @Getter
-public abstract class BaseUpdatableEntity extends BaseEntity {
+public abstract class BaseUpdatableJpaEntity extends BaseJpaEntity {
 
     @LastModifiedDate
     @Column(name = "updated_at")
@@ -27,6 +27,13 @@ public abstract class BaseUpdatableEntity extends BaseEntity {
 
     @Column(name = "deleted_by")
     private UUID deletedBy;
+
+    public void updateAudit(UUID updatedBy) {
+        this.updatedAt = Instant.now();
+        if (updatedBy != null) {
+            this.updatedBy = updatedBy;
+        }
+    }
 
     public void softDelete(UUID deletedBy) {
         this.deletedAt = Instant.now();

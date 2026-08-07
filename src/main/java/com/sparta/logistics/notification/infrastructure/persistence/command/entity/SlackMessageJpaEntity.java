@@ -1,9 +1,10 @@
-package com.sparta.logistics.notification.infrastructure.persistence.jpa.entity;
+package com.sparta.logistics.notification.infrastructure.persistence.command.entity;
 
 import com.sparta.logistics.notification.domain.entity.SlackMessage;
 import com.sparta.logistics.notification.domain.model.AuditInfo;
 import com.sparta.logistics.notification.domain.model.DeletionInfo;
 import com.sparta.logistics.notification.domain.model.SlackMessageStatus;
+import com.sparta.logistics.notification.infrastructure.persistence.common.entity.BaseUpdatableJpaEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -22,17 +23,23 @@ import java.util.UUID;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "p_slack_messages")
-public class SlackMessageJpaEntity extends BaseUpdatableEntity {
+public class SlackMessageJpaEntity extends BaseUpdatableJpaEntity {
     @Column(name = "receiver_id", nullable = false, updatable = false)
     private UUID receiverId;
 
-    @Column(name = "sender_id", nullable = false, updatable = false)
+    @Column(name = "receiver_slack_id", nullable = false, updatable = false)
+    private String receiverSlackId;
+
+    @Column(name = "sender_id", updatable = false)
     private UUID senderId;
+
+    @Column(name = "sender_slack_id")
+    private String senderSlackId;
 
     @Column(name = "content", nullable = false, columnDefinition = "VARCHAR(1024)")
     private String content;
 
-    @ColumnDefault(value = "PENDING")
+    @ColumnDefault(value = "'PENDING'")
     @Column(name = "status", nullable = false, columnDefinition = "VARCHAR(24)")
     @Enumerated(EnumType.STRING)
     private SlackMessageStatus status;
@@ -49,12 +56,14 @@ public class SlackMessageJpaEntity extends BaseUpdatableEntity {
     private Long version;
 
     public static SlackMessageJpaEntity createFromModel(
-            UUID receiverId, UUID senderId, String content
+            SlackMessage slackMessage
     ) {
         return SlackMessageJpaEntity.builder()
-                .receiverId(receiverId)
-                .senderId(senderId)
-                .content(content)
+                .receiverId(slackMessage.receiverId())
+                .receiverSlackId(slackMessage.receiverSlackId())
+                .senderId(slackMessage.senderId())
+                .senderSlackId(slackMessage.senderSlackId())
+                .content(slackMessage.content())
                 .status(SlackMessageStatus.PENDING)
                 .retryCount(0)
                 .build();
@@ -65,13 +74,24 @@ public class SlackMessageJpaEntity extends BaseUpdatableEntity {
         this.status = slackMessage.status();
         this.retryCount = slackMessage.retryCount();
         this.errorMessage = slackMessage.errorMessage();
+        if (slackMessage.receiverSlackId() != null) {
+            this.receiverSlackId = slackMessage.receiverSlackId();
+        }
+        if (slackMessage.senderSlackId() != null) {
+            this.senderSlackId = slackMessage.senderSlackId();
+        }
+        if (slackMessage.auditInfo() != null && slackMessage.auditInfo().updatedBy() != null) {
+            updateAudit(slackMessage.auditInfo().updatedBy());
+        }
     }
 
     public SlackMessage toModel() {
         return new SlackMessage(
                 getId(),
                 receiverId,
+                receiverSlackId,
                 senderId,
+                senderSlackId,
                 content,
                 status,
                 retryCount,
@@ -88,13 +108,17 @@ public class SlackMessageJpaEntity extends BaseUpdatableEntity {
     @Builder
     private SlackMessageJpaEntity(
             UUID receiverId,
+            String receiverSlackId,
             UUID senderId,
+            String senderSlackId,
             String content,
             SlackMessageStatus status,
             int retryCount
     ) {
         this.receiverId = receiverId;
+        this.receiverSlackId = receiverSlackId;
         this.senderId = senderId;
+        this.senderSlackId = senderSlackId;
         this.content = content;
         this.status = status;
         this.retryCount = retryCount;
