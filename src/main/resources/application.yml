@@ -62,6 +62,7 @@ message:
     delivery: delivery.queue
     hub: hub.queue
     notification: notification.queue
+    order: order.queue
 
 management:
   tracing:
