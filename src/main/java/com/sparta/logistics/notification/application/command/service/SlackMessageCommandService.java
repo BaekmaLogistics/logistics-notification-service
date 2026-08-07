@@ -59,6 +59,7 @@ class SlackMessageCommandService implements UpdateSlackMessageUseCase, DeleteSla
         if (slackMessage.status() == SlackMessageStatus.PROCESSING) {
             throw new ApiException(ErrorResponseCode.INVALID_REQUEST, "이미 처리 중인 메세지입니다.");
         }
+        // TODO: PROCESSING 중 장애 발생으로 중단된 상태 처리 필요
 
         SlackMessage processing = slackMessage.process(actorId);
         slackMessageCommandRepository.update(processing);
@@ -98,9 +99,9 @@ class SlackMessageCommandService implements UpdateSlackMessageUseCase, DeleteSla
         SlackMessage updatedMessage = new SlackMessage(
                 slackMessage.id(),
                 slackMessage.receiverId(),
-                command.receiverSlackId(),
+                slackMessage.receiverSlackId(),
                 slackMessage.senderId(),
-                command.senderSlackId(),
+                slackMessage.senderSlackId(),
                 command.content(),
                 slackMessage.status(),
                 slackMessage.retryCount(),

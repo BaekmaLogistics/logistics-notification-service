@@ -27,7 +27,7 @@ public class SlackMessageJpaEntity extends BaseUpdatableJpaEntity {
     @Column(name = "receiver_id", nullable = false, updatable = false)
     private UUID receiverId;
 
-    @Column(name = "receiver_slack_id", nullable = false)
+    @Column(name = "receiver_slack_id", nullable = false, updatable = false)
     private String receiverSlackId;
 
     @Column(name = "sender_id", updatable = false)
