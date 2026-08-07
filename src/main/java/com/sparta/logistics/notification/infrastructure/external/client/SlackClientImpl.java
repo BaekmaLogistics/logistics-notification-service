@@ -6,6 +6,7 @@ import com.sparta.logistics.notification.common.exception.ApiException;
 import com.sparta.logistics.notification.domain.entity.SlackMessage;
 import com.sparta.logistics.notification.infrastructure.feign.client.SlackFeignClient;
 import com.sparta.logistics.notification.infrastructure.feign.dto.SlackFeignRequest;
+import com.sparta.logistics.notification.infrastructure.feign.dto.SlackFeignResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,7 +28,13 @@ class SlackClientImpl implements SlackClient {
         log.info("Sending Slack DM message: id={}, receiverSlackId={}", slackMessage.id(), slackMessage.receiverSlackId());
 
         SlackFeignRequest request = new SlackFeignRequest(slackMessage.receiverSlackId(), slackMessage.content());
-        slackFeignClient.sendSlackMessage("Bearer " + botToken, request);
+        SlackFeignResponse response = slackFeignClient.sendSlackMessage("Bearer " + botToken, request);
+
+        if (response == null || !response.ok()) {
+            String errorMsg = (response != null && response.error() != null) ? response.error() : "Unknown Slack API Error";
+            log.error("Failed to send Slack DM: id={}, error={}", slackMessage.id(), errorMsg);
+            throw new ApiException(ErrorResponseCode.FEIGN_CLIENT_ERROR, "Slack 전송 실패: " + errorMsg);
+        }
 
         log.info("Successfully sent Slack DM message: id={}", slackMessage.id());
     }
