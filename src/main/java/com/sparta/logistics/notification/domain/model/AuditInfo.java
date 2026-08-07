@@ -10,7 +10,7 @@ public record AuditInfo(
         UUID updatedBy
 ) {
     public AuditInfo withUpdatedBy(UUID updatedBy) {
-        return new AuditInfo(this.createdAt, this.createdBy, this.updatedAt,
+        return new AuditInfo(this.createdAt, this.createdBy, Instant.now(),
                 updatedBy);
     }
 }
