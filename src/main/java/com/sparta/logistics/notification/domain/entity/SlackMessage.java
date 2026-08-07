@@ -25,7 +25,7 @@ public record SlackMessage(
     public static SlackMessage create(
             UUID receiverId, String receiverSlackId, UUID senderId, String senderSlackId, String content
     ) {
-        validate(receiverId, senderId, content);
+        validate(receiverId, receiverSlackId, senderId, content);
         verifyContent(content);
 
         return new SlackMessage(
@@ -50,8 +50,13 @@ public record SlackMessage(
     }
 
     public SlackMessage fail(String errorMessage, UUID updatedBy) {
+        String newErrorMessage = errorMessage;
+        if (errorMessage.length() > 128) {
+            newErrorMessage = errorMessage.substring(0, 128);
+        }
+
         return transitionTo(SlackMessageStatus.FAILED, updatedBy)
-                .updateErrorMessage(errorMessage);
+                .updateErrorMessage(newErrorMessage);
     }
 
     public SlackMessage retry(UUID updatedBy) {
@@ -101,9 +106,9 @@ public record SlackMessage(
         );
     }
 
-    private static void validate(UUID receiverId, UUID senderId, String content) {
+    private static void validate(UUID receiverId, String receiverSlackId, UUID senderId, String content) {
         if (receiverId == null || senderId == null || content == null || content.
-                isBlank()) {
+                isBlank() || receiverSlackId == null || receiverSlackId.isBlank()) {
             throw new ApiException(ErrorResponseCode.INVALID_REQUEST, "수신자, 발신자, 메시지 내용은 필수입니다.");
         }
     }
