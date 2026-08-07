@@ -4,12 +4,14 @@ import com.sparta.logistics.notification.application.command.usecase.DeleteSlack
 import com.sparta.logistics.notification.application.command.usecase.SendSlackMessageUseCase;
 import com.sparta.logistics.notification.application.command.usecase.UpdateSlackMessageUseCase;
 import com.sparta.logistics.notification.common.code.GeneralResponseCode;
+import com.sparta.logistics.notification.common.security.AuthUser;
 import com.sparta.logistics.notification.presentation.command.dto.SendSlackMessageRequest;
 import com.sparta.logistics.notification.presentation.command.dto.UpdateSlackMessageRequest;
 import com.sparta.logistics.notification.presentation.common.dto.response.GeneralResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -29,37 +31,40 @@ public class SlackMessageCommandController {
     private final UpdateSlackMessageUseCase updateSlackMessageUseCase;
     private final DeleteSlackMessageUseCase deleteSlackMessageUseCase;
 
+    @PreAuthorize("hasAnyRole('MASTER', 'HUB_MANAGER', 'DELIVERY_MANAGER', 'SUPPLIER_MANAGER')")
     @PostMapping("/v1/slack-messages")
     public ResponseEntity<GeneralResponse<Void>> sendSlackMessage(
-            @AuthenticationPrincipal UUID userId,
+            @AuthenticationPrincipal AuthUser user,
             @RequestBody @Valid SendSlackMessageRequest request
     ) {
-        sendSlackMessageUseCase.sendMessage(request.toCommand(userId), userId);
+        sendSlackMessageUseCase.sendMessage(request.toCommand(user.id()), user.id());
 
         return GeneralResponse.toResponseEntity(
                 GeneralResponseCode.ACCEPTED, null
         );
     }
 
+    @PreAuthorize("hasAnyRole('MASTER')")
     @PatchMapping("/v1/slack-messages/{slackMessageId}")
     public ResponseEntity<GeneralResponse<Void>> updateSlackMessage(
-            @AuthenticationPrincipal UUID userId,
+            @AuthenticationPrincipal AuthUser user,
             @PathVariable UUID slackMessageId,
             @RequestBody @Valid UpdateSlackMessageRequest request
     ) {
-        updateSlackMessageUseCase.update(slackMessageId, request.toCommand(), userId);
+        updateSlackMessageUseCase.update(slackMessageId, request.toCommand(), user.id());
 
         return GeneralResponse.toResponseEntity(
                 GeneralResponseCode.OK, null
         );
     }
 
+    @PreAuthorize("hasAnyRole('MASTER')")
     @DeleteMapping("/v1/slack-messages/{slackMessageId}")
     public ResponseEntity<GeneralResponse<Void>> deleteSlackMessage(
-            @AuthenticationPrincipal UUID userId,
+            @AuthenticationPrincipal AuthUser user,
             @PathVariable UUID slackMessageId
     ) {
-        deleteSlackMessageUseCase.delete(slackMessageId, userId);
+        deleteSlackMessageUseCase.delete(slackMessageId, user.id());
 
         return GeneralResponse.toResponseEntity(
                 GeneralResponseCode.OK, null
