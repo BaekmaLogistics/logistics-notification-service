@@ -21,6 +21,7 @@ class SendSlackMessageFacade implements SendSlackMessageUseCase {
 
         SlackMessage slackMessage = commandService.append(command, userId); // 현재 상태를 포함한 SlackMessage Entity 저장
 
+        // TODO: 저장과 이벤트 발행을 원자적으로 연결 (Transactional Outbox 패턴 적용)
         transmitSlackMessageEventProducer.produce(slackMessage.id(), userId); // 이벤트 기반 비동기 Slack API 호출
     }
 }

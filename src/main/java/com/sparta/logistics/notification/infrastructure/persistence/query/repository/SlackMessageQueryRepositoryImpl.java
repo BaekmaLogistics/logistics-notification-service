@@ -1,5 +1,7 @@
 package com.sparta.logistics.notification.infrastructure.persistence.query.repository;
 
+import com.querydsl.core.types.Order;
+import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -11,10 +13,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -64,6 +68,8 @@ public class SlackMessageQueryRepositoryImpl implements SlackMessageQueryReposit
                 .and(containsKeyword(query.keyword()))
                 .and(betweenCreatedAt(query.startDate(), query.endDate()));
 
+        List<OrderSpecifier<?>> orderSpecifiers = getOrderSpecifiers(pageable);
+
         List<SimpleSlackMessageInfo> content = queryFactory
                 .select(Projections.constructor(SimpleSlackMessageInfo.class,
                         slackMessageJpaEntity.id,
@@ -80,6 +86,7 @@ public class SlackMessageQueryRepositoryImpl implements SlackMessageQueryReposit
                 ))
                 .from(slackMessageJpaEntity)
                 .where(condition)
+                .orderBy(orderSpecifiers.toArray(new OrderSpecifier[0]))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
@@ -102,6 +109,7 @@ public class SlackMessageQueryRepositoryImpl implements SlackMessageQueryReposit
     }
 
     private BooleanExpression containsKeyword(String keyword) {
+        // TODO: 메세지 양이 많아질 경우 ElasticSearch 도입 고려
         return keyword != null && !keyword.isBlank() ? slackMessageJpaEntity.content.contains(keyword) : null;
     }
 
@@ -114,5 +122,24 @@ public class SlackMessageQueryRepositoryImpl implements SlackMessageQueryReposit
             return slackMessageJpaEntity.createdAt.loe(endDate);
         }
         return null;
+    }
+    private List<OrderSpecifier<?>> getOrderSpecifiers(Pageable pageable) {
+        List<OrderSpecifier<?>> orderSpecifiers = new ArrayList<>();
+
+        if (pageable.getSort().isUnsorted()) {
+            orderSpecifiers.add(new OrderSpecifier<>(Order.DESC, slackMessageJpaEntity.createdAt));
+            return orderSpecifiers;
+        }
+
+        for (Sort.Order sortOrder : pageable.getSort()) {
+            Order direction = sortOrder.isAscending() ? Order.ASC : Order.DESC;
+
+            if ("updatedAt".equals(sortOrder.getProperty())) {
+                orderSpecifiers.add(new OrderSpecifier<>(direction, slackMessageJpaEntity.updatedAt));
+            } else {
+                orderSpecifiers.add(new OrderSpecifier<>(direction, slackMessageJpaEntity.createdAt));
+            }
+        }
+        return orderSpecifiers;
     }
 }
