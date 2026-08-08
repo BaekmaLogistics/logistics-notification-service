@@ -1,9 +1,9 @@
-package com.sparta.logistics.notification.application.command.dto;
+package com.sparta.logistics.notification.application.command.model;
 
 import java.util.UUID;
 
 public record UserInfo(
-        UUID userId,
+        UUID id,
         String name,
         String email,
         String slackId

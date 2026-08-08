@@ -4,12 +4,17 @@ import java.time.Instant;
 import java.util.UUID;
 
 public record SendOrderNotificationCommand(
-        UUID orderId,
-        UUID ordererId,
-        UUID productId,
+        UUID id,
         UUID departureHubId,
-        UUID waypointHubId,
-        UUID deliveryDriverId,
+        UUID receiverCompanyId,
+        UUID productId,
+        int quantity,
+        UUID deliveryId,
+        String orderStatus,
+        String requestMessage,
+        Instant dueDate,
+        Instant canceledAt,
+        String canceledReason,
         Instant occurredAt
 ) {
 }

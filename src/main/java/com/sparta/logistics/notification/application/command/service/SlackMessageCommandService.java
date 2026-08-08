@@ -3,7 +3,7 @@ package com.sparta.logistics.notification.application.command.service;
 import com.sparta.logistics.notification.application.command.client.UserServiceClient;
 import com.sparta.logistics.notification.application.command.dto.SendSlackMessageCommand;
 import com.sparta.logistics.notification.application.command.dto.UpdateSlackMessageCommand;
-import com.sparta.logistics.notification.application.command.dto.UserInfo;
+import com.sparta.logistics.notification.application.command.model.UserInfo;
 import com.sparta.logistics.notification.application.command.usecase.DeleteSlackMessageUseCase;
 import com.sparta.logistics.notification.application.command.usecase.UpdateSlackMessageUseCase;
 import com.sparta.logistics.notification.common.code.ErrorResponseCode;

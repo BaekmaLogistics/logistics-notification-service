@@ -1,6 +1,6 @@
 package com.sparta.logistics.notification.application.command.client;
 
-import com.sparta.logistics.notification.application.command.dto.UserInfo;
+import com.sparta.logistics.notification.application.command.model.UserInfo;
 
 import java.util.List;
 import java.util.Map;
