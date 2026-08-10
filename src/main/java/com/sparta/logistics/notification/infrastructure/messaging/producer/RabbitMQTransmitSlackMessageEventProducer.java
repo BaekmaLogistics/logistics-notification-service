@@ -22,13 +22,13 @@ public class RabbitMQTransmitSlackMessageEventProducer implements TransmitSlackM
     private String queueNotification;
 
     @Override
-    public void produce(UUID slackMessageId, UUID userId) {
+    public void produce(UUID slackMessageId, UUID actorId) {
         TransmitSlackMessagePayload payload = new TransmitSlackMessagePayload(slackMessageId);
 
         EventEnvelope<TransmitSlackMessagePayload> event = EventEnvelope.of(
                 "TransmitSlackMessage",
                 payload,
-                userId
+                actorId
         );
 
         rabbitTemplate.convertAndSend(exchange, queueNotification, event);
