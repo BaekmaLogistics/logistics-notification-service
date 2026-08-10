@@ -4,7 +4,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 public record SendOrderNotificationCommand(
-        UUID id,
+        UUID orderId,
         UUID departureHubId,
         UUID receiverCompanyId,
         UUID productId,
