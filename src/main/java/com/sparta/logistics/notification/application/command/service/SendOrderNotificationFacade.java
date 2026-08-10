@@ -96,7 +96,7 @@ class SendOrderNotificationFacade implements SendOrderNotificationUseCase {
         SlackMessage slackMessage = commandService.append(
                 departureHub.managerId(),
                 null,
-                generatedMessage
+                generatedMessage != null ? generatedMessage : ""
         );
 
         // Slack 전송 이벤트 발행 — 비동기 전송 처리 위임
