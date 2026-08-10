@@ -73,7 +73,9 @@ class SlackMessageIntegrationTest {
         SendSlackMessageCommand sendCommand = new SendSlackMessageCommand(receiverId, senderId, messageContent);
 
         // 1. 메시지 생성 및 DB PENDING 저장
-        SlackMessage savedMessage = slackMessageCommandService.append(sendCommand, senderId);
+        SlackMessage savedMessage = slackMessageCommandService.append(
+                sendCommand.receiverId(), sendCommand.senderId(), sendCommand.content()
+        );
 
         assertThat(savedMessage).isNotNull();
         assertThat(savedMessage.id()).isNotNull();
@@ -102,7 +104,9 @@ class SlackMessageIntegrationTest {
     void transmitSlackMessage_failure_shouldChangeStatusToRetrying() {
         // given
         SendSlackMessageCommand sendCommand = new SendSlackMessageCommand(receiverId, senderId, "[통합 테스트] 실패 케이스");
-        SlackMessage savedMessage = slackMessageCommandService.append(sendCommand, senderId);
+        SlackMessage savedMessage = slackMessageCommandService.append(
+                sendCommand.receiverId(), sendCommand.senderId(), sendCommand.content()
+        );
 
         // SlackClient 호출 시 예외 발생하도록 Mocking
         willThrow(new RuntimeException("Slack API 전송 오류"))
@@ -130,7 +134,9 @@ class SlackMessageIntegrationTest {
     void transmitSlackMessage_exceedMaxRetry_shouldChangeStatusToFailed() {
         // given
         SendSlackMessageCommand sendCommand = new SendSlackMessageCommand(receiverId, senderId, "[통합 테스트] 최종 실패 케이스");
-        SlackMessage savedMessage = slackMessageCommandService.append(sendCommand, senderId);
+        SlackMessage savedMessage = slackMessageCommandService.append(
+                sendCommand.receiverId(), sendCommand.senderId(), sendCommand.content()
+        );
 
         // MAX_RETRY_COUNT(3)에 도달하도록 강제로 retryCount를 3으로 맞춘 상태를 가정하거나,
         // 3번 연속 transmit을 호출하여 시뮬레이션
