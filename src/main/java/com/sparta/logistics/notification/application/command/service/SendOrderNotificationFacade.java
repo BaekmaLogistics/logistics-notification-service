@@ -91,19 +91,16 @@ class SendOrderNotificationFacade implements SendOrderNotificationUseCase {
             }
         }
 
-        // AI 생성 메시지로 SlackMessage 저장 (발신자: 허브 매니저, 수신자: 시스템 발신)
-        // 실패 시 generatedMessage는 null이므로 빈 문자열로 저장
-        SlackMessage slackMessage = commandService.append(
-                departureHub.managerId(),
-                null,
-                generatedMessage != null ? generatedMessage : ""
-        );
-
         // AI 생성 성공 시에만 Slack 전송 이벤트 발행
         if (generatedMessage != null) {
+            SlackMessage slackMessage = commandService.append(
+                    departureHub.managerId(),
+                    null,
+                    generatedMessage
+            );
             transmitSlackMessageEventProducer.produce(slackMessage.id(), null);
         } else {
-            log.warn("AI 메시지 생성 최종 실패로 인해 Slack 전송 이벤트를 발행하지 않습니다. SlackMessage ID: {}", slackMessage.id());
+            log.warn("AI 메시지 생성 최종 실패로 인해 Slack 전송 이벤트를 발행하지 않습니다.");
         }
     }
 
