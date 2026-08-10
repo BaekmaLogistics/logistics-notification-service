@@ -68,10 +68,10 @@ class SendOrderNotificationFacade implements SendOrderNotificationUseCase {
         AiHistory aiHistory = aiPromptLogCommandService.append(prompt);
 
         // AI 메시지 생성 (실패 시 최대 MAX_RETRY_COUNT회 재시도)
-        String generatedMessage;
+        String generatedMessage = null;
         int retryCount = 0;
 
-        while (true) {
+        while (retryCount < MAX_RETRY_COUNT) {
             try {
                 // AI 호출 — 성공 시 이력 SUCCESS 업데이트 후 루프 탈출
                 generatedMessage = generateHubDispatchMessageService.generate(prompt);
@@ -85,22 +85,26 @@ class SendOrderNotificationFacade implements SendOrderNotificationUseCase {
                     // 재시도 가능 횟수 남음 — 이력 RETRYING 업데이트 후 재시도
                     aiPromptLogCommandService.updateStatusToRetrying(aiHistory, retryCount, e.getMessage());
                 } else {
-                    // 최대 재시도 횟수 소진 — 이력 FAILED 업데이트 후 예외 전파
+                    // 최대 재시도 횟수 소진 — 이력 FAILED 업데이트
                     aiPromptLogCommandService.updateStatusToFailed(aiHistory, e.getMessage());
-                    throw new RuntimeException("AI 메시지 생성 실패: 최대 재시도 횟수 초과", e);
                 }
             }
         }
 
         // AI 생성 메시지로 SlackMessage 저장 (발신자: 허브 매니저, 수신자: 시스템 발신)
+        // 실패 시 generatedMessage는 null이므로 빈 문자열로 저장
         SlackMessage slackMessage = commandService.append(
                 departureHub.managerId(),
                 null,
-                generatedMessage
+                generatedMessage != null ? generatedMessage : ""
         );
 
-        // Slack 전송 이벤트 발행 — 비동기 전송 처리 위임
-        transmitSlackMessageEventProducer.produce(slackMessage.id(), null);
+        // AI 생성 성공 시에만 Slack 전송 이벤트 발행
+        if (generatedMessage != null) {
+            transmitSlackMessageEventProducer.produce(slackMessage.id(), null);
+        } else {
+            log.warn("AI 메시지 생성 최종 실패로 인해 Slack 전송 이벤트를 발행하지 않습니다. SlackMessage ID: {}", slackMessage.id());
+        }
     }
 
     private Map<UUID, HubInfo> resolveWaypointHubInfos(List<DeliveryRouteInfo> routes, UUID departureHubId) {
