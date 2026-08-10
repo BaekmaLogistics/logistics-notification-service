@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -56,11 +57,7 @@ class GenerateHubDispatchMessageService {
 
         // sequence 순서대로 정렬 후 경유 허브명 조합 (출발/도착 제외한 중간 경유지)
         String waypointsStr = routes.stream()
-                .sorted((a, b) -> {
-                    if (a.sequence() == null) return -1;
-                    if (b.sequence() == null) return 1;
-                    return Integer.compare(a.sequence(), b.sequence());
-                })
+                .sorted(Comparator.comparing(DeliveryRouteInfo::sequence, Comparator.nullsLast(Integer::compareTo)))
                 .map(route -> {
                     HubInfo hub = hubInfoMap.get(route.toHubId());
                     return hub != null ? hub.name() : route.toHubId().toString();
