@@ -1,6 +1,5 @@
 package com.sparta.logistics.notification.application.command.service;
 
-import com.sparta.logistics.notification.application.command.client.AiPromptClient;
 import com.sparta.logistics.notification.application.command.client.CompanyServiceClient;
 import com.sparta.logistics.notification.application.command.client.DeliveryServiceClient;
 import com.sparta.logistics.notification.application.command.client.HubServiceClient;
@@ -16,21 +15,15 @@ import com.sparta.logistics.notification.application.command.model.OrderInfo;
 import com.sparta.logistics.notification.application.command.model.ProductInfo;
 import com.sparta.logistics.notification.application.command.model.UserInfo;
 import com.sparta.logistics.notification.application.command.producer.TransmitSlackMessageEventProducer;
-import com.sparta.logistics.notification.application.command.usecase.SendOrderNotificationUseCase;
+import com.sparta.logistics.notification.domain.entity.AiHistory;
 import com.sparta.logistics.notification.domain.entity.SlackMessage;
-import com.sparta.logistics.notification.domain.model.SlackMessageStatus;
-import com.sparta.logistics.notification.domain.repository.SlackMessageCommandRepository;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.ApplicationContext;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.transaction.annotation.Transactional;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -38,57 +31,52 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 
-@SpringBootTest
-@Transactional
-@ActiveProfiles("test")
+@ExtendWith(MockitoExtension.class)
 class SendOrderNotificationFacadeTest {
 
-    // ── 실제 인스턴스 ──────────────────────────────────────────
-    @Autowired
-    private SendOrderNotificationUseCase sendOrderNotificationUseCase;
+    @InjectMocks
+    private SendOrderNotificationFacade sendOrderNotificationFacade;
 
-    @Autowired
-    private SlackMessageCommandRepository slackMessageCommandRepository;
+    @Mock
+    private GenerateHubDispatchMessageService generateHubDispatchMessageService;
 
-    @Autowired
-    private ApplicationContext applicationContext;
+    @Mock
+    private SlackMessageCommandService commandService;
 
-    // ── Mocking (외부 의존성) ──────────────────────────────────
-    @MockitoBean
-    private HubServiceClient hubServiceClient;
-
-    @MockitoBean
-    private OrderServiceClient orderServiceClient;
-
-    @MockitoBean
-    private ProductServiceClient productServiceClient;
-
-    @MockitoBean
-    private CompanyServiceClient companyServiceClient;
-
-    @MockitoBean
-    private DeliveryServiceClient deliveryServiceClient;
-
-    @MockitoBean
-    private UserServiceClient userServiceClient;
-
-    @MockitoBean
-    private AiPromptClient aiPromptClient;
-
-    @MockitoBean
+    @Mock
     private TransmitSlackMessageEventProducer transmitSlackMessageEventProducer;
 
-    // ── 테스트 픽스처 ─────────────────────────────────────────
+    @Mock
+    private HubServiceClient hubServiceClient;
+
+    @Mock
+    private OrderServiceClient orderServiceClient;
+
+    @Mock
+    private ProductServiceClient productServiceClient;
+
+    @Mock
+    private CompanyServiceClient companyServiceClient;
+
+    @Mock
+    private DeliveryServiceClient deliveryServiceClient;
+
+    @Mock
+    private UserServiceClient userServiceClient;
+
+    @Mock
+    private AiPromptLogCommandService aiPromptLogCommandService;
+
     private UUID orderId;
     private UUID departureHubId;
     private UUID receiverCompanyId;
@@ -96,167 +84,150 @@ class SendOrderNotificationFacadeTest {
     private UUID deliveryId;
     private UUID driverUserId;
     private UUID hubManagerId;
-
     private SendOrderNotificationCommand command;
 
     @BeforeEach
     void setUp() {
-        orderId           = UUID.randomUUID();
-        departureHubId    = UUID.randomUUID();
+        orderId = UUID.randomUUID();
+        departureHubId = UUID.randomUUID();
         receiverCompanyId = UUID.randomUUID();
-        productId         = UUID.randomUUID();
-        deliveryId        = UUID.randomUUID();
-        driverUserId      = UUID.randomUUID();
-        hubManagerId      = UUID.randomUUID();
+        productId = UUID.randomUUID();
+        deliveryId = UUID.randomUUID();
+        driverUserId = UUID.randomUUID();
+        hubManagerId = UUID.randomUUID();
 
         Instant dueDate = Instant.now().plus(5, ChronoUnit.DAYS);
 
         command = new SendOrderNotificationCommand(
-                orderId,
-                departureHubId,
-                receiverCompanyId,
-                productId,
-                10,
-                deliveryId,
-                "PENDING",
-                "최대한 빨리 보내주세요.",
-                dueDate,
-                null,
-                null,
-                Instant.now()
+                orderId, departureHubId, receiverCompanyId, productId, 10,
+                deliveryId, "PENDING", "빠른 배송 부탁드립니다.", dueDate, null, null, Instant.now()
         );
 
-        // HubServiceClient 단건 Mock
-        HubInfo departureHub = new HubInfo(departureHubId, "경기 북부 센터", "경기도 의정부시", 37.7, 127.0, hubManagerId);
+        HubInfo departureHub = new HubInfo(departureHubId, "경기 센터", "경기도 의정부시", 37.7, 127.0, hubManagerId);
         given(hubServiceClient.getHubInfo(departureHubId)).willReturn(departureHub);
 
-        // HubServiceClient bulk Mock (경유지 허브)
+        OrderInfo orderInfo = new OrderInfo(orderId, departureHubId, receiverCompanyId, productId, 10, deliveryId, "PENDING", "빠른 배송 부탁드립니다.", dueDate, null, null);
+        given(orderServiceClient.getOrderInfo(orderId)).willReturn(orderInfo);
+
+        ProductInfo productInfo = new ProductInfo(productId, "오징어", receiverCompanyId);
+        given(productServiceClient.getProductInfo(productId)).willReturn(productInfo);
+
+        CompanyInfo companyInfo = new CompanyInfo(receiverCompanyId, "해산물월드", "RECEIVER", departureHubId, "부산시");
+        given(companyServiceClient.getCompanyInfo(receiverCompanyId)).willReturn(companyInfo);
+
+        DeliveryInfo deliveryInfo = new DeliveryInfo(deliveryId, driverUserId, "HUB_TO_COMPANY", departureHubId, 1);
+        given(deliveryServiceClient.getDeliveryInfo(deliveryId)).willReturn(deliveryInfo);
+
+        UserInfo driver = new UserInfo(driverUserId, "홍길동", "hong@test.com", "U12345");
+        given(userServiceClient.searchUserSlackInfos(List.of(driverUserId))).willReturn(Map.of(driverUserId, driver));
+    }
+
+    @Test
+    @DisplayName("주문 알림 발송 - AI 메시지 생성 성공 시 Slack 메시지 저장 및 이벤트 발행")
+    void send_success() {
+        // given
         UUID waypointHubId = UUID.randomUUID();
-        HubInfo waypointHub = new HubInfo(waypointHubId, "대전광역시 센터", "대전광역시 유성구", 36.3, 127.3, UUID.randomUUID());
-        given(hubServiceClient.getHubInfos(anyList())).willReturn(Map.of(waypointHubId, waypointHub));
-
-        // OrderServiceClient Mock
-        given(orderServiceClient.getOrderInfo(orderId)).willReturn(new OrderInfo(
-                orderId, departureHubId, receiverCompanyId, productId,
-                10, deliveryId, "PENDING", "최대한 빨리 보내주세요.",
-                dueDate, null, null
-        ));
-
-        // ProductServiceClient Mock
-        given(productServiceClient.getProductInfo(productId)).willReturn(
-                new ProductInfo(productId, "마른 오징어", receiverCompanyId)
-        );
-
-        // CompanyServiceClient Mock
-        given(companyServiceClient.getCompanyInfo(receiverCompanyId)).willReturn(
-                new CompanyInfo(receiverCompanyId, "해산물월드", "RECEIVER", departureHubId, "부산시 사하구 낙동대로 1번길 1")
-        );
-
-        // DeliveryServiceClient Mock
-        given(deliveryServiceClient.getDeliveryInfo(deliveryId)).willReturn(
-                new DeliveryInfo(deliveryId, driverUserId, "HUB_TO_COMPANY", departureHubId, 1)
-        );
         given(deliveryServiceClient.getDeliveryRoutes(deliveryId)).willReturn(List.of(
-                new DeliveryRouteInfo(UUID.randomUUID(), 1, departureHubId, waypointHubId, 150.0, 120, null, null, driverUserId)
+                new DeliveryRouteInfo(UUID.randomUUID(), 1, departureHubId, waypointHubId, 100.0, 60, null, null, driverUserId)
         ));
+        given(hubServiceClient.getHubInfos(List.of(waypointHubId))).willReturn(Map.of(waypointHubId, mock(HubInfo.class)));
 
-        // UserServiceClient Mock
-        UserInfo driver = new UserInfo(driverUserId, "고길동", "kdk@sparta.world", "U0DRIVER01");
-        UserInfo hubManager = new UserInfo(hubManagerId, "허브매니저", "manager@sparta.world", "U0MANAGER01");
-        given(userServiceClient.searchUserSlackInfos(List.of(driverUserId))).willReturn(
-                Map.of(driverUserId, driver)
-        );
-        given(userServiceClient.searchUserSlackInfos(List.of(hubManagerId))).willReturn(
-                Map.of(hubManagerId, hubManager)
-        );
+        String prompt = "생성된 프롬프트";
+        String generatedMessage = "AI가 생성한 메시지";
+        AiHistory aiHistory = mock(AiHistory.class);
+        SlackMessage slackMessage = mock(SlackMessage.class);
+        UUID slackMessageId = UUID.randomUUID();
 
-        // AiPromptClient Mock
-        given(aiPromptClient.promptOne(anyString(), anyString(), any())).willReturn(
-                "[AI 생성 메시지] 주문 번호: " + orderId + " | 최종 발송 시한: " + dueDate
-        );
-    }
+        given(generateHubDispatchMessageService.buildPrompt(any(), any(), any(), any(), any(), any(), any())).willReturn(prompt);
+        given(aiPromptLogCommandService.append(prompt)).willReturn(aiHistory);
+        given(generateHubDispatchMessageService.generate(prompt)).willReturn(generatedMessage);
+        given(slackMessage.id()).willReturn(slackMessageId);
+        given(commandService.append(eq(hubManagerId), eq(null), eq(generatedMessage))).willReturn(slackMessage);
 
-    @Test
-    @DisplayName("주문 알림 발송 - SlackMessage가 PENDING 상태로 DB에 저장되고 이벤트가 발행된다")
-    void send_shouldSaveSlackMessageAsPendingAndProduceEvent() {
         // when
-        sendOrderNotificationUseCase.send(command);
+        sendOrderNotificationFacade.send(command);
 
-        // then: TransmitSlackMessageEventProducer.produce()에 넘어간 ID 캡처
-        ArgumentCaptor<UUID> idCaptor = ArgumentCaptor.forClass(UUID.class);
-        then(transmitSlackMessageEventProducer).should(times(1)).produce(idCaptor.capture(), any());
-        UUID producedId = idCaptor.getValue();
-
-        // then: 캡처한 ID로 DB 조회하여 PENDING 상태 및 내용 검증
-        SlackMessage saved = slackMessageCommandRepository.findById(producedId)
-                .orElseThrow(() -> new AssertionError("저장된 SlackMessage를 찾을 수 없습니다."));
-
-        assertThat(saved.status()).isEqualTo(SlackMessageStatus.PENDING);
-        assertThat(saved.senderId()).isNull(); // 시스템 발신 = senderId null
-        assertThat(saved.content()).contains("[AI 생성 메시지]");
+        // then
+        then(aiPromptLogCommandService).should().updateStatusToSuccess(aiHistory, generatedMessage);
+        then(transmitSlackMessageEventProducer).should().produce(slackMessageId, null);
     }
 
     @Test
-    @DisplayName("주문 알림 발송 - AI 메시지 생성 시 주문/상품/허브 정보가 프롬프트에 사용된다")
-    void send_shouldCallAiPromptWithOrderContext() {
+    @DisplayName("주문 알림 발송 - AI 메시지 생성 1회 실패 후 2회차 재시도 시 성공 케이스")
+    void send_aiRetryThenSuccess() {
+        // given
+        given(deliveryServiceClient.getDeliveryRoutes(deliveryId)).willReturn(List.of());
+
+        String prompt = "생성된 프롬프트";
+        String generatedMessage = "AI 재시도 생성 성공 메시지";
+        AiHistory aiHistory = mock(AiHistory.class);
+        SlackMessage slackMessage = mock(SlackMessage.class);
+        UUID slackMessageId = UUID.randomUUID();
+
+        given(generateHubDispatchMessageService.buildPrompt(any(), any(), any(), any(), any(), any(), any())).willReturn(prompt);
+        given(aiPromptLogCommandService.append(prompt)).willReturn(aiHistory);
+        given(generateHubDispatchMessageService.generate(prompt))
+                .willThrow(new RuntimeException("1회차 생성 실패"))
+                .willReturn(generatedMessage);
+
+        given(slackMessage.id()).willReturn(slackMessageId);
+        given(commandService.append(eq(hubManagerId), eq(null), eq(generatedMessage))).willReturn(slackMessage);
+
         // when
-        sendOrderNotificationUseCase.send(command);
+        sendOrderNotificationFacade.send(command);
 
-        // then: AiPromptClient가 정확히 1회 호출됐는지 검증
-        ArgumentCaptor<String> promptCaptor = ArgumentCaptor.forClass(String.class);
-        then(aiPromptClient).should(times(1)).promptOne(promptCaptor.capture(), anyString(), any());
-
-        String capturedPrompt = promptCaptor.getValue();
-        assertThat(capturedPrompt).contains("마른 오징어");       // 상품명
-        assertThat(capturedPrompt).contains("경기 북부 센터");     // 발송지
-        assertThat(capturedPrompt).contains("해산물월드");          // 도착지 업체명
-        assertThat(capturedPrompt).contains("고길동");             // 배송 담당자
+        // then
+        then(aiPromptLogCommandService).should(times(1)).updateStatusToRetrying(eq(aiHistory), eq(1), anyString());
+        then(aiPromptLogCommandService).should().updateStatusToSuccess(aiHistory, generatedMessage);
+        then(transmitSlackMessageEventProducer).should().produce(slackMessageId, null);
     }
 
     @Test
-    @DisplayName("주문 알림 발송 - AI 메시지 생성 3회 실패 시 예외 발생 및 이벤트 미발행")
-    void send_whenAiFailsAfterRetries_shouldThrowExceptionAndNotProduceEvent() {
-        // given: AI 호출이 항상 실패하도록 설정
-        given(aiPromptClient.promptOne(anyString(), anyString(), any()))
-                .willThrow(new RuntimeException("AI API Error"));
+    @DisplayName("주문 알림 발송 - 경유지 경로 목록이 없는 경우(empty)도 정상적으로 처리")
+    void send_emptyRoutes_success() {
+        // given
+        given(deliveryServiceClient.getDeliveryRoutes(deliveryId)).willReturn(List.of());
 
-        // when & then: 예외가 발생해야 하며, 이벤트 발행은 없어야 함
-        assertThrows(RuntimeException.class, () -> sendOrderNotificationUseCase.send(command));
+        String prompt = "생성된 프롬프트";
+        String generatedMessage = "AI 메시지";
+        AiHistory aiHistory = mock(AiHistory.class);
+        SlackMessage slackMessage = mock(SlackMessage.class);
+        UUID slackMessageId = UUID.randomUUID();
+
+        given(generateHubDispatchMessageService.buildPrompt(any(), any(), any(), any(), any(), any(), any())).willReturn(prompt);
+        given(aiPromptLogCommandService.append(prompt)).willReturn(aiHistory);
+        given(generateHubDispatchMessageService.generate(prompt)).willReturn(generatedMessage);
+        given(slackMessage.id()).willReturn(slackMessageId);
+        given(commandService.append(eq(hubManagerId), eq(null), eq(generatedMessage))).willReturn(slackMessage);
+
+        // when
+        sendOrderNotificationFacade.send(command);
+
+        // then
+        then(hubServiceClient).should().getHubInfo(any());
+        then(transmitSlackMessageEventProducer).should().produce(slackMessageId, null);
+    }
+
+    @Test
+    @DisplayName("주문 알림 발송 - AI 메시지 생성 실패 후 재시도 실패 시 Slack 전송 이벤트 발행 안 함")
+    void send_aiFailed_shouldNotProduceEvent() {
+        // given
+        given(deliveryServiceClient.getDeliveryRoutes(deliveryId)).willReturn(List.of());
+
+        String prompt = "생성된 프롬프트";
+        AiHistory aiHistory = mock(AiHistory.class);
+
+        given(generateHubDispatchMessageService.buildPrompt(any(), any(), any(), any(), any(), any(), any())).willReturn(prompt);
+        given(aiPromptLogCommandService.append(prompt)).willReturn(aiHistory);
+        given(generateHubDispatchMessageService.generate(prompt)).willThrow(new RuntimeException("AI Error"));
+
+        // when
+        sendOrderNotificationFacade.send(command);
+
+        // then
+        then(aiPromptLogCommandService).should(times(2)).updateStatusToRetrying(eq(aiHistory), anyInt(), anyString());
+        then(aiPromptLogCommandService).should().updateStatusToFailed(eq(aiHistory), anyString());
+        then(commandService).should(never()).append(any(), any(), any());
         then(transmitSlackMessageEventProducer).should(never()).produce(any(), any());
-    }
-
-    @Test
-    @Disabled("실제 OpenAI API 호출 — 수동 확인 시에만 실행 (비용 발생)")
-    @DisplayName("주문 알림 발송 - 실제 OpenAI API로 AI 메시지가 생성되고 DB에 저장된다")
-    void send_withRealAiPrompt_shouldGenerateMessageAndSave() {
-        // given: AiPromptClient stub 없이 실제 OpenAI 호출로 위임
-        given(aiPromptClient.promptOne(anyString(), anyString(), any()))
-                .willAnswer(invocation -> {
-                    // Spring AI ChatClient 직접 생성하여 실제 호출
-                    org.springframework.ai.chat.client.ChatClient chatClient =
-                            applicationContext.getBean(org.springframework.ai.chat.client.ChatClient.class);
-                    String prompt = invocation.getArgument(0);
-                    String systemInstruction = invocation.getArgument(1);
-                    return chatClient.prompt()
-                            .user(prompt)
-                            .system(systemInstruction)
-                            .call()
-                            .content();
-                });
-
-        // when
-        sendOrderNotificationUseCase.send(command);
-
-        // then: produce() 호출 여부로 ID 캡처
-        ArgumentCaptor<UUID> idCaptor = ArgumentCaptor.forClass(UUID.class);
-        then(transmitSlackMessageEventProducer).should(times(1)).produce(idCaptor.capture(), any());
-
-        // then: DB에서 실제 AI 생성 메시지 내용 확인
-        SlackMessage saved = slackMessageCommandRepository.findById(idCaptor.getValue())
-                .orElseThrow(() -> new AssertionError("저장된 SlackMessage를 찾을 수 없습니다."));
-
-        assertThat(saved.status()).isEqualTo(SlackMessageStatus.PENDING);
-        assertThat(saved.content()).isNotBlank();
-        System.out.println("▶ AI 생성 메시지:\n" + saved.content());
     }
 }
