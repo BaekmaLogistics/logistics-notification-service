@@ -103,10 +103,6 @@ class SlackMessageCommandService implements UpdateSlackMessageUseCase, DeleteSla
     public void update(UUID slackMessageId, UpdateSlackMessageCommand command, UUID userId) {
         SlackMessage slackMessage = getSlackMessage(slackMessageId);
 
-        if (!slackMessage.senderId().equals(userId)) {
-            throw new ApiException(ErrorResponseCode.INVALID_REQUEST, "본인이 작성한 메시지만 수정할 수 있습니다.");
-        }
-
         SlackMessage updatedMessage = new SlackMessage(
                 slackMessage.id(),
                 slackMessage.receiverId(),
@@ -127,12 +123,6 @@ class SlackMessageCommandService implements UpdateSlackMessageUseCase, DeleteSla
     @Override
     @Transactional
     public void delete(UUID slackMessageId, UUID userId) {
-        SlackMessage slackMessage = getSlackMessage(slackMessageId);
-
-        if (!slackMessage.senderId().equals(userId)) {
-            throw new ApiException(ErrorResponseCode.INVALID_REQUEST, "본인이 작성한 메시지만 삭제할 수 있습니다.");
-        }
-
         slackMessageCommandRepository.delete(slackMessageId, userId);
     }
 
