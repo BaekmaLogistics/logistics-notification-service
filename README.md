@@ -14,6 +14,27 @@
 
 ---
 
+## 🚀 핵심 기술적 강점 (Technical Highlights)
+
+이 프로젝트는 단순한 기능 구현을 넘어, 엔터프라이즈 환경에서의 안정성과 확장성을 고려하여 설계되었습니다.
+
+1. **헥사고날 아키텍처 (Hexagonal Architecture)**
+   - 도메인 로직을 외부 인프라(DB, 외부 API, 메시지 브로커)로부터 완전히 격리하여, 비즈니스 규칙의 변경이 인프라에 영향을 주지 않도록 설계했습니다.
+   - `Application` 계층과 `Domain` 계층의 명확한 분리를 통해 테스트 용이성과 유지보수성을 극대화했습니다.
+
+2. **이벤트 기반 아키텍처 (Event-Driven Architecture)**
+   - `RabbitMQ`를 활용한 비동기 메시지 처리를 통해 시스템 간 결합도를 낮추고, 트래픽 급증 시에도 안정적인 서비스 처리가 가능하도록 설계했습니다.
+   - `EventEnvelope`를 통한 표준화된 이벤트 포맷을 사용하여 이벤트 추적성을 확보했습니다.
+
+3. **동시성 제어 및 데이터 무결성**
+   - JPA의 `@Version`을 활용한 **낙관적 락(Optimistic Lock)**을 적용하여, 분산 환경에서의 데이터 수정 충돌을 방지하고 무결성을 보장합니다.
+   - 상태 전이 규칙(State Machine)을 도메인 모델에 내재화하여, 비즈니스적으로 유효하지 않은 상태 변경을 원천 차단합니다.
+
+4. **관측 가능성 (Observability)**
+   - `Micrometer Tracing`과 `Zipkin`을 연동하여, 분산 환경에서의 요청 흐름을 추적하고 장애 발생 시 신속한 원인 파악이 가능하도록 구성했습니다.
+
+---
+
 ## 📁 프로젝트 패키지 구조
 
 헥사고날/클린 아키텍처 원칙에 따라 도메인 중심의 계층 분리를 준수합니다.
@@ -26,6 +47,18 @@ src/main/java/com/sparta/logistics/notification
 ├── infrastructure/    # JPA Persistence(SlackMessageJpaEntity), RabbitMQ, Feign, Redis 구현체
 └── presentation/      # REST Controller, Request/Response DTO, GlobalExceptionHandler
 ```
+
+---
+
+## 🚀 핵심 기능
+
+### 1. AI 기반 메시지 생성 (AI ChatClient)
+- `AiPromptClient`를 통해 외부 AI 모델과 연동하여 상황에 맞는 알림 메시지를 자동으로 생성합니다.
+- 추상화된 인터페이스를 통해 AI 모델 변경 시에도 비즈니스 로직의 수정 없이 유연하게 대응 가능합니다.
+
+### 2. 이벤트 기반 비동기 처리
+- **비동기 메시지 발송**: `RabbitMQ`를 활용하여 슬랙 메시지 발송 요청을 비동기로 처리합니다.
+- `TransmitSlackMessageEventProducer`를 통해 메시지 발송 이벤트를 발행하고, 이를 소비하여 실제 슬랙 API를 호출함으로써 시스템의 응답성을 높이고 결합도를 낮췄습니다.
 
 ---
 
@@ -76,13 +109,6 @@ stateDiagram-v2
 
 ---
 
-## 🛡️ 동시성 제어 및 영속성 매핑
-
-- **낙관적 락(Optimistic Lock)**: `SlackMessageJpaEntity`에 `@Version` 필드를 적용하여 워커 간 동시 수정 충돌을 방지합니다.
-- **도메인 격리**: JPA 엔티티와 순수 도메인 모델 간 `createFromModel`, `updateFromModel`, `toModel`을 통한 명확한 매핑을 지원합니다.
-
----
-
 ## 🚀 실행 및 API 문서
 
 ### 애플리케이션 실행
@@ -94,4 +120,3 @@ stateDiagram-v2
 애플리케이션 실행 후 접속 URL:
 - **Swagger UI**: `http://localhost:8080/api/api-docs`
 - **OpenAPI Spec**: `http://localhost:8080/api/api-spec`
-

@@ -16,12 +16,16 @@ class SendSlackMessageFacade implements SendSlackMessageUseCase {
     private final TransmitSlackMessageEventProducer transmitSlackMessageEventProducer;
 
     @Override
-    public void sendMessage(SendSlackMessageCommand command, UUID userId) {
+    public void sendMessage(SendSlackMessageCommand command, UUID actorId) {
         // TODO: Command 및 userId 검증 필요
 
-        SlackMessage slackMessage = commandService.append(command, userId); // 현재 상태를 포함한 SlackMessage Entity 저장
+        SlackMessage slackMessage = commandService.append(
+                command.receiverId(),
+                command.senderId(),
+                command.content()
+        ); // 현재 상태를 포함한 SlackMessage Entity 저장
 
         // TODO: 저장과 이벤트 발행을 원자적으로 연결 (Transactional Outbox 패턴 적용)
-        transmitSlackMessageEventProducer.produce(slackMessage.id(), userId); // 이벤트 기반 비동기 Slack API 호출
+        transmitSlackMessageEventProducer.produce(slackMessage.id(), actorId); // 이벤트 기반 비동기 Slack API 호출
     }
 }

@@ -1,9 +1,8 @@
 package com.sparta.logistics.notification.application.command.service;
 
 import com.sparta.logistics.notification.application.command.client.UserServiceClient;
-import com.sparta.logistics.notification.application.command.dto.SendSlackMessageCommand;
 import com.sparta.logistics.notification.application.command.dto.UpdateSlackMessageCommand;
-import com.sparta.logistics.notification.application.command.dto.UserInfo;
+import com.sparta.logistics.notification.application.command.model.UserInfo;
 import com.sparta.logistics.notification.application.command.usecase.DeleteSlackMessageUseCase;
 import com.sparta.logistics.notification.application.command.usecase.UpdateSlackMessageUseCase;
 import com.sparta.logistics.notification.common.code.ErrorResponseCode;
@@ -26,23 +25,35 @@ class SlackMessageCommandService implements UpdateSlackMessageUseCase, DeleteSla
     private final UserServiceClient userServiceClient;
 
     @Transactional
-    public SlackMessage append(SendSlackMessageCommand command, UUID senderId) {
+    public SlackMessage append(
+            UUID receiverId,
+            UUID senderId,
+            String content
+    ) {
+        // senderId 존재 여부에 따라 조회 대상 사용자 ID 목록 구성 (List.of NPE 방지)
+        List<UUID> targetUserIds = senderId == null
+                ? List.of(receiverId)
+                : List.of(receiverId, senderId);
+
+        // 사용자 서비스(Feign)를 통해 수신자 및 발신자 정보 일괄 조회
         Map<UUID, UserInfo> userInfos = userServiceClient
-                .searchUserSlackInfos(List.of(command.receiverId(), senderId));
+                .searchUserSlackInfos(targetUserIds);
 
-        UserInfo receiverInfo = userInfos.get(command.receiverId());
-        UserInfo senderInfo = userInfos.get(senderId);
+        UserInfo receiverInfo = userInfos.get(receiverId);
+        UserInfo senderInfo = senderId != null ? userInfos.get(senderId) : null;
 
-        if (receiverInfo == null || senderInfo == null) {
+        // 수신자 필수 검증 및 발신자 존재 시 유효성 검증
+        if (receiverInfo == null || (senderId != null && senderInfo == null)) {
             throw new ApiException(ErrorResponseCode.FEIGN_CLIENT_ERROR, "수신자 또는 발신자의 유저 정보를 찾을 수 없습니다.");
         }
 
+        // 조회한 슬랙 정보 기반으로 메시지 도메인 엔티티 생성 및 저장
         SlackMessage slackMessage = SlackMessage.create(
-                command.receiverId(),
+                receiverId,
                 receiverInfo.slackId(),
                 senderId,
-                senderInfo.slackId(),
-                command.content()
+                senderInfo != null ? senderInfo.slackId() : null,
+                content
         );
 
         return slackMessageCommandRepository.append(slackMessage);
@@ -92,10 +103,6 @@ class SlackMessageCommandService implements UpdateSlackMessageUseCase, DeleteSla
     public void update(UUID slackMessageId, UpdateSlackMessageCommand command, UUID userId) {
         SlackMessage slackMessage = getSlackMessage(slackMessageId);
 
-        if (!slackMessage.senderId().equals(userId)) {
-            throw new ApiException(ErrorResponseCode.INVALID_REQUEST, "본인이 작성한 메시지만 수정할 수 있습니다.");
-        }
-
         SlackMessage updatedMessage = new SlackMessage(
                 slackMessage.id(),
                 slackMessage.receiverId(),
@@ -116,12 +123,6 @@ class SlackMessageCommandService implements UpdateSlackMessageUseCase, DeleteSla
     @Override
     @Transactional
     public void delete(UUID slackMessageId, UUID userId) {
-        SlackMessage slackMessage = getSlackMessage(slackMessageId);
-
-        if (!slackMessage.senderId().equals(userId)) {
-            throw new ApiException(ErrorResponseCode.INVALID_REQUEST, "본인이 작성한 메시지만 삭제할 수 있습니다.");
-        }
-
         slackMessageCommandRepository.delete(slackMessageId, userId);
     }
 
