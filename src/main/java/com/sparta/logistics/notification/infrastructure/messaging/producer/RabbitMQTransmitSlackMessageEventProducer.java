@@ -18,8 +18,6 @@ public class RabbitMQTransmitSlackMessageEventProducer implements TransmitSlackM
     @Value("${message.exchange}")
     private String exchange;
 
-    private final String ROUTING_KEY = "notification.slack-message.transmit" ;
-
     @Override
     public void produce(UUID slackMessageId, UUID actorId) {
         TransmitSlackMessagePayload payload = new TransmitSlackMessagePayload(slackMessageId);
@@ -30,6 +28,6 @@ public class RabbitMQTransmitSlackMessageEventProducer implements TransmitSlackM
                 actorId
         );
 
-        rabbitTemplate.convertAndSend(exchange, ROUTING_KEY, event);
+        rabbitTemplate.convertAndSend(exchange, EventRoutingKey.TRANSMIT_SLACK_MESSAGE.getKey(), event);
     }
 }
