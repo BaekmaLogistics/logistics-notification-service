@@ -39,6 +39,14 @@ spring:
             read-timeout: 3000
             logger-level: basic
 
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY}
+      chat:
+        options:
+          model: ${OPENAI_MODEL_NAME}  # 사용할 모델
+          temperature: ${OPENAI_TEMPERATURE}  # 응답의 다양성
+
 resilience4j:
   circuitbreaker:
     configs:
