@@ -87,7 +87,7 @@ class SendOrderNotificationFacade implements SendOrderNotificationUseCase {
                 } else {
                     // 최대 재시도 횟수 소진 — 이력 FAILED 업데이트 후 예외 전파
                     aiPromptLogCommandService.updateStatusToFailed(aiHistory, e.getMessage());
-                    break;
+                    throw new RuntimeException("AI 메시지 생성 실패: 최대 재시도 횟수 초과", e);
                 }
             }
         }

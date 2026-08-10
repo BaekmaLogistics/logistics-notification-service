@@ -39,11 +39,13 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 
 @SpringBootTest
@@ -209,6 +211,18 @@ class SendOrderNotificationFacadeTest {
         assertThat(capturedPrompt).contains("경기 북부 센터");     // 발송지
         assertThat(capturedPrompt).contains("해산물월드");          // 도착지 업체명
         assertThat(capturedPrompt).contains("고길동");             // 배송 담당자
+    }
+
+    @Test
+    @DisplayName("주문 알림 발송 - AI 메시지 생성 3회 실패 시 예외 발생 및 이벤트 미발행")
+    void send_whenAiFailsAfterRetries_shouldThrowExceptionAndNotProduceEvent() {
+        // given: AI 호출이 항상 실패하도록 설정
+        given(aiPromptClient.promptOne(anyString(), anyString(), any()))
+                .willThrow(new RuntimeException("AI API Error"));
+
+        // when & then: 예외가 발생해야 하며, 이벤트 발행은 없어야 함
+        assertThrows(RuntimeException.class, () -> sendOrderNotificationUseCase.send(command));
+        then(transmitSlackMessageEventProducer).should(never()).produce(any(), any());
     }
 
     @Test
