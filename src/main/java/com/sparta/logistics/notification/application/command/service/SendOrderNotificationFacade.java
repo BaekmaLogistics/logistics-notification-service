@@ -68,7 +68,7 @@ class SendOrderNotificationFacade implements SendOrderNotificationUseCase {
         AiHistory aiHistory = aiPromptLogCommandService.append(prompt);
 
         // AI 메시지 생성 (실패 시 최대 MAX_RETRY_COUNT회 재시도)
-        String generatedMessage = null;
+        String generatedMessage;
         int retryCount = 0;
 
         while (true) {
@@ -96,7 +96,7 @@ class SendOrderNotificationFacade implements SendOrderNotificationUseCase {
         SlackMessage slackMessage = commandService.append(
                 departureHub.managerId(),
                 null,
-                generatedMessage != null ? generatedMessage : ""
+                generatedMessage
         );
 
         // Slack 전송 이벤트 발행 — 비동기 전송 처리 위임
