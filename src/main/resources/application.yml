@@ -17,6 +17,7 @@ spring:
             connect-timeout: 5000
             read-timeout: 3000
             logger-level: basic
+
 server:
   port: 8084
 
