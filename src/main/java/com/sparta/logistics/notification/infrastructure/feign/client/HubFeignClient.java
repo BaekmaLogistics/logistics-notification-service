@@ -20,7 +20,7 @@ public interface HubFeignClient {
             @PathVariable UUID hubId
     );
 
-    @PostMapping("/internal/api/v1/hubs/batch")
+    @PostMapping("/internal/api/v1/hubs/search")
     GeneralResponse<List<HubResponse>> getHubsByIds(
             @RequestBody List<UUID> hubIds
     );

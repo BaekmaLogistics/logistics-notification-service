@@ -13,7 +13,7 @@ import java.util.UUID;
 @FeignClient(name = "user-service", configuration = OpenFeignConfig.class)
 public interface UserFeignClient {
 
-    @PostMapping("/internal/api/v1/users")
+    @PostMapping("/internal/api/v1/users/search")
     GeneralResponse<List<UserResponse>> searchUsersById(
             @RequestBody List<UUID> userIds
     );
