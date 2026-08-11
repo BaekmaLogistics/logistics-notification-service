@@ -3,8 +3,6 @@ spring:
     name: notification-service
   profiles:
     active: local
-  config:
-    import: "optional:configserver:"
 
   cloud:
     openfeign:
@@ -16,10 +14,6 @@ spring:
             connect-timeout: 5000
             read-timeout: 3000
             logger-level: basic
-  jpa:
-    hibernate:
-      ddl-auto: create-drop
-
 server:
   port: 8084
 
@@ -50,7 +44,7 @@ spring:
   config:
     activate:
       on-profile: prod, dev
-    import: "configserver:" # Config Server 접속 실패 시 앱 다운 (Fail-Fast)
+    import: "configserver:http://logistics-config-server:18081" # Config Server 접속 실패 시 앱 다운 (Fail-Fast)
   cloud:
     config:
       discovery:
