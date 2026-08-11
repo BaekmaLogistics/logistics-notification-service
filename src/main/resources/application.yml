@@ -6,6 +6,20 @@ spring:
   config:
     import: "optional:configserver:"
 
+  cloud:
+    openfeign:
+      circuitbreaker:
+        enabled: true
+      client:
+        config:
+          default:
+            connect-timeout: 5000
+            read-timeout: 3000
+            logger-level: basic
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+
 server:
   port: 8084
 
@@ -13,6 +27,14 @@ eureka:
   client:
     service-url:
       defaultZone: ${EUREKA_SERVER_URL:http://localhost:8761/eureka/}
+
+message:
+  exchange: baekma.exchange # Producer만 적용
+  queue:
+    delivery: delivery.queue
+    hub: hub.queue
+    notification: notification.queue
+    order: order.queue
 
 ---
 # 로컬 / 테스트 환경 (Config Server 안 띄우고 로컬 설정으로만 돌림)
