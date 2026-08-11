@@ -13,25 +13,14 @@ public class QueueConfig {
     @Value("${message.exchange}")
     private String exchange;
 
-    @Value("${message.queue.delivery}")
-    private String queueDelivery;
-    @Value("${message.queue.hub}")
-    private String queueHub;
     @Value("${message.queue.notification}")
     private String queueNotification;
-    @Value("${message.queue.order}")
-    private String queueOrder;
 
     @Bean
     public TopicExchange exchange() { return new TopicExchange(exchange); }
 
-    @Bean public Queue queueDelivery() { return new Queue(queueDelivery); }
-    @Bean public Queue queueHub() { return new Queue(queueHub); }
     @Bean public Queue queueNotification() { return new Queue(queueNotification); }
-    @Bean public Queue queueOrder() { return new Queue(queueOrder); }
 
-    @Bean public Binding bindingDelivery() { return BindingBuilder.bind(queueDelivery()).to(exchange()).with("delivery.#"); }
-    @Bean public Binding bindingHub() { return BindingBuilder.bind(queueHub()).to(exchange()).with("hub.#"); }
-    @Bean public Binding bindingNotification() { return BindingBuilder.bind(queueNotification()).to(exchange()).with("notification.#"); }
-    @Bean public Binding bindingOrder() { return BindingBuilder.bind(queueOrder()).to(exchange()).with("order.#"); }
+    @Bean public Binding bindingSlackMessageTransmit() { return BindingBuilder.bind(queueNotification()).to(exchange()).with("notification.slack-message.transmit"); }
+    @Bean public Binding bindingOrderCreated() { return BindingBuilder.bind(queueNotification()).to(exchange()).with("order.created"); }
 }
