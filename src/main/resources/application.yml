@@ -1,98 +1,34 @@
 spring:
   application:
     name: notification-service
-  #profiles:
-  #  active: local
-  datasource:
-    url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
-    username: ${DB_USER}
-    password: ${DB_PASSWORD}
-  jpa:
-    hibernate:
-      ddl-auto: update
-    properties:
-      hibernate:
-        show_sql: true
-        format_sql: true
-        use_sql_comments: true
-        impl.uuid_binary_compatibility: true
-  # Redis 설정, Redis 사용하지 않을 시 주석처리
-  data:
-    redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
+  profiles:
+    active: prod
 
-  rabbitmq:
-    host: ${RABBITMQ_HOST}
-    port: ${RABBITMQ_PORT}
-    username: ${RABBITMQ_USERNAME}
-    password: ${RABBITMQ_PASSWORD}
+server:
+  port: 8084
 
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_SERVER_URL:http://localhost:8761/eureka/}
+
+---
+# 로컬 / 테스트 환경 (Config Server 안 띄우고 로컬 설정으로만 돌림)
+spring:
+  config:
+    activate:
+      on-profile: local, test
+    import: "" # Config Server 접속 x
+
+---
+# 운영/배포 환경 (prod, dev 등 -> Fail-Fast 적용)
+spring:
+  config:
+    activate:
+      on-profile: prod, dev
+    import: "configserver:" # Config Server 접속 실패 시 앱 다운 (Fail-Fast)
   cloud:
-    openfeign:
-      circuitbreaker:
+    config:
+      discovery:
         enabled: true
-      client:
-        config:
-          default:
-            connect-timeout: 5000
-            read-timeout: 3000
-            logger-level: basic
-
-  ai:
-    openai:
-      api-key: ${OPENAI_API_KEY}
-      chat:
-        options:
-          model: ${OPENAI_MODEL_NAME}  # 사용할 모델
-          temperature: ${OPENAI_TEMPERATURE}  # 응답의 다양성
-
-resilience4j:
-  circuitbreaker:
-    configs:
-      default: # 기본 구성 이름
-        registerHealthIndicator: true
-        slidingWindowSize: 5
-        minimumNumberOfCalls: 5
-        failureRateThreshold: 50
-        permittedNumberOfCallsInHalfOpenState: 3
-        waitDurationInOpenState: 20s
-
-slack:
-  api:
-    url: ${SLACK_API_URL:https://slack.com/api}
-  bot:
-    token: ${SLACK_BOT_TOKEN}
-
-message:
-  exchange: baekma.exchange # Producer만 적용
-  queue:
-    delivery: delivery.queue
-    hub: hub.queue
-    notification: notification.queue
-    order: order.queue
-
-management:
-  tracing:
-    enabled: true
-    sampling:
-      probability: 1.0
-
-  zipkin:
-    tracing:
-      endpoint: ${ZIPKIN_SERVER:http://localhost:9411/api/v2/spans}
-
-springdoc:
-  api-docs:
-    path: /api/api-spec
-    enabled: true
-  swagger-ui:
-    path: /api/api-docs
-    enabled: true
-  override-with-generic-response: false
-  use-fqn: true
-
-logging:
-  level:
-    org.hibernate.SQL: debug
-    org.hibernate.orm.jdbc.bind: trace
+        service-id: config-server

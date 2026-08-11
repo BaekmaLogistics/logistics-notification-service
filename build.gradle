@@ -17,6 +17,9 @@ java {
 repositories {
     mavenCentral()
 }
+ext {
+    set('springCloudVersion', "2025.0.2")
+}
 
 dependencyManagement {
     imports {
@@ -46,6 +49,12 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-security'
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
+
+    // Eureka Client
+    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+
+    // Config Client
+    implementation 'org.springframework.cloud:spring-cloud-starter-config'
 
     //OpenFeign
     implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
