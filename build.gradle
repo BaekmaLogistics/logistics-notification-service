@@ -6,7 +6,7 @@ plugins {
 
 group = 'com.sparta'
 version = '0.0.1-SNAPSHOT'
-description = 'notification'
+description = 'logistics-notification-service'
 
 java {
     toolchain {
@@ -17,6 +17,9 @@ java {
 repositories {
     mavenCentral()
 }
+ext {
+    set('springCloudVersion', "2025.0.2")
+}
 
 dependencyManagement {
     imports {
@@ -24,16 +27,39 @@ dependencyManagement {
     }
 }
 
+def querydslDir = "src/main/generated"
+
+sourceSets {
+    main.java.srcDirs += [ querydslDir ]
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.getGeneratedSourceOutputDirectory().set(file(querydslDir))
+}
+
+clean {
+    delete file(querydslDir)
+}
+
 dependencies {
     //Spring Boot
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
 
+    // Eureka Client
+    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+
+    // Config Client
+    implementation 'org.springframework.cloud:spring-cloud-starter-config'
+
     //OpenFeign
     implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
+    implementation 'org.springframework.cloud:spring-cloud-starter-loadbalancer'
+    implementation 'org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j'
 
     //QueryDSL
     implementation "com.querydsl:querydsl-jpa:5.1.0:jakarta"
@@ -43,6 +69,7 @@ dependencies {
 
     //Micrometer Tracing
     implementation 'io.micrometer:micrometer-tracing-bridge-brave'
+    implementation 'io.github.openfeign:feign-micrometer'
 
     //Zipkin
     implementation 'io.zipkin.reporter2:zipkin-reporter-brave'
@@ -71,6 +98,10 @@ dependencies {
     // Redis
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
     implementation 'org.springframework.boot:spring-boot-starter-cache'
+
+    // Spring AI
+    implementation platform("org.springframework.ai:spring-ai-bom:1.1.8")
+    implementation 'org.springframework.ai:spring-ai-starter-model-openai'
 }
 
 tasks.named('test') {
