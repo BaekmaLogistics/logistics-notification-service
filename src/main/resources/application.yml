@@ -3,7 +3,6 @@ spring:
     name: notification-service
   profiles:
     active: local
-
   config:
     import: "optional:configserver:"
   cloud:
@@ -35,17 +34,3 @@ message:
     hub: hub.queue
     notification: notification.queue
     order: order.queue
-
----
-# 로컬 / 테스트 환경 (Config Server 안 띄우고 로컬 설정으로만 돌림)
-spring:
-  config:
-    activate:
-      on-profile: local, test
-
----
-# 운영/배포 환경 (prod, dev 등 -> Fail-Fast 적용)
-spring:
-  config:
-    activate:
-      on-profile: prod, dev
