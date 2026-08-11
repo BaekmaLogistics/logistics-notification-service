@@ -5,6 +5,10 @@ spring:
     active: local
 
   cloud:
+    config:
+      discovery:
+        enabled: true
+        service-id: config-server
     openfeign:
       circuitbreaker:
         enabled: true
@@ -36,7 +40,6 @@ spring:
   config:
     activate:
       on-profile: local, test
-    import: "" # Config Server 접속 x
 
 ---
 # 운영/배포 환경 (prod, dev 등 -> Fail-Fast 적용)
@@ -44,9 +47,4 @@ spring:
   config:
     activate:
       on-profile: prod, dev
-    import: "configserver:http://logistics-config-server" # Config Server 접속 실패 시 앱 다운 (Fail-Fast)
-  cloud:
-    config:
-      discovery:
-        enabled: true
-        service-id: config-server
+    import: "configserver:" # Config Server 접속 실패 시 앱 다운 (Fail-Fast)
