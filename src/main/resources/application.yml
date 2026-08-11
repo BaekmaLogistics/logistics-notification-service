@@ -2,7 +2,9 @@ spring:
   application:
     name: notification-service
   profiles:
-    active: prod
+    active: local
+  config:
+    import: "optional:configserver:"
 
 server:
   port: 8084
