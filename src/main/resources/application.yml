@@ -44,7 +44,7 @@ spring:
   config:
     activate:
       on-profile: prod, dev
-    import: "configserver:" # Config Server 접속 실패 시 앱 다운 (Fail-Fast)
+    import: "configserver:http://logistics-config-server" # Config Server 접속 실패 시 앱 다운 (Fail-Fast)
   cloud:
     config:
       discovery:
