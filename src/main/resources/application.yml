@@ -40,6 +40,7 @@ message:
       order-created: order.created
       order-canceled: order.canceled
       order-completed: order.completed
+      transmit-slack-message: notification.slack-message.transmit
     hub:
       route-changed: hub.route.changed
     company:
