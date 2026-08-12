@@ -1,122 +1,91 @@
-# 📢 Logistics Notification Service (알림 서비스)
+# 📦 Logistics Notification Service (알림 서비스)
 
-스파르타 물류 시스템(Sparta Logistics System)의 슬랙(Slack) 메시지 및 알림 처리를 담당하는 마이크로서비스입니다.
-
----
-
-## 🛠 주요 기술 스택
-
-- **Core**: Java 17, Spring Boot 3.5.14
-- **Persistence**: PostgreSQL, Spring Data JPA, QueryDSL 5.1.0
-- **Messaging & Cache**: RabbitMQ (Spring AMQP), Redis (Spring Cache)
-- **Client & Tracing**: OpenFeign, Micrometer Tracing (Zipkin)
-- **API Docs**: Springdoc OpenAPI (Swagger UI)
+> Baekma Logistics의 슬랙(Slack) 메시지 및 알림 처리를 담당하는 마이크로서비스입니다.
 
 ---
 
-## 🚀 핵심 기술적 강점 (Technical Highlights)
+## 📌 담당 기능
 
-이 프로젝트는 단순한 기능 구현을 넘어, 엔터프라이즈 환경에서의 안정성과 확장성을 고려하여 설계되었습니다.
-
-1. **헥사고날 아키텍처 (Hexagonal Architecture)**
-   - 도메인 로직을 외부 인프라(DB, 외부 API, 메시지 브로커)로부터 완전히 격리하여, 비즈니스 규칙의 변경이 인프라에 영향을 주지 않도록 설계했습니다.
-   - `Application` 계층과 `Domain` 계층의 명확한 분리를 통해 테스트 용이성과 유지보수성을 극대화했습니다.
-
-2. **이벤트 기반 아키텍처 (Event-Driven Architecture)**
-   - `RabbitMQ`를 활용한 비동기 메시지 처리를 통해 시스템 간 결합도를 낮추고, 트래픽 급증 시에도 안정적인 서비스 처리가 가능하도록 설계했습니다.
-   - `EventEnvelope`를 통한 표준화된 이벤트 포맷을 사용하여 이벤트 추적성을 확보했습니다.
-
-3. **동시성 제어 및 데이터 무결성**
-   - JPA의 `@Version`을 활용한 **낙관적 락(Optimistic Lock)**을 적용하여, 분산 환경에서의 데이터 수정 충돌을 방지하고 무결성을 보장합니다.
-   - 상태 전이 규칙(State Machine)을 도메인 모델에 내재화하여, 비즈니스적으로 유효하지 않은 상태 변경을 원천 차단합니다.
-
-4. **관측 가능성 (Observability)**
-   - `Micrometer Tracing`과 `Zipkin`을 연동하여, 분산 환경에서의 요청 흐름을 추적하고 장애 발생 시 신속한 원인 파악이 가능하도록 구성했습니다.
+* **슬랙(Slack) 메시지 관리 및 발송**: 단건 메시지 생성, 수정, 삭제, 상세 조회 및 조건별 페이징 검색
+* **비동기 메시지 전송 및 재시도**: RabbitMQ 메시지 큐를 활용한 슬랙 전송 이벤트를 비동기로 발행/소비하며, 전송 실패 시 상태 전이 및 재시도 관리
+* **AI 기반 알림 문구 생성**: Spring AI(`ChatClient`)를 활용해 상황별 알림 메시지(단건/다건)를 자동 생성하는 인터페이스 지원
+* **사용자 슬랙 정보 연동**: OpenFeign Client를 통해 User Service와 연동하여 수신자/발신자 Slack ID 및 사용자 정보 매핑
 
 ---
 
-## 📁 프로젝트 패키지 구조
+## 🛠 Tech Stack
 
-헥사고날/클린 아키텍처 원칙에 따라 도메인 중심의 계층 분리를 준수합니다.
-
-```text
-src/main/java/com/sparta/logistics/notification
-├── application/       # 비즈니스 유스케이스 / 애플리케이션 서비스 로직
-├── common/            # 공통 예외(ApiException), 공통 코드(ErrorResponseCode, GeneralResponseCode)
-├── domain/            # 순수 도메인 엔티티(SlackMessage), Value Objects(SlackMessageStatus, AuditInfo)
-├── infrastructure/    # JPA Persistence(SlackMessageJpaEntity), RabbitMQ, Feign, Redis 구현체
-└── presentation/      # REST Controller, Request/Response DTO, GlobalExceptionHandler
-```
+* **Language** : Java 17
+* **Framework** : Spring Boot 3.5.14
+* **Database** : PostgreSQL, Spring Data JPA, QueryDSL 5.1.0
+* **Cache** : Redis
+* **Messaging** : RabbitMQ (Spring AMQP)
+* **Communication** : OpenFeign, Spring AI, Micrometer Tracing (Zipkin)
 
 ---
 
-## 🚀 핵심 기능
+## ✨ 주요 구현 내용
 
-### 1. AI 기반 메시지 생성 (AI ChatClient)
-- `AiPromptClient`를 통해 외부 AI 모델과 연동하여 상황에 맞는 알림 메시지를 자동으로 생성합니다.
-- 추상화된 인터페이스를 통해 AI 모델 변경 시에도 비즈니스 로직의 수정 없이 유연하게 대응 가능합니다.
+### 1. 헥사고날 아키텍처 (Hexagonal Architecture) 및 CQRS 기반 설계
+* **계층 간 관심사 분리**: Presentation, Application, Domain, Infrastructure 계층을 명확히 분리하여 도메인 규칙이 인프라 기술(JPA, RabbitMQ, Feign 등)에 직접 의존하지 않도록 수동 마핑 및 포트/어댑터 패턴 적용.
+* **Command / Query 분리**: CUD 명령 유스케이스(`SlackMessageCommandService`, `SendSlackMessageFacade`)와 R 조회 유스케이스(`SearchSlackMessagesService`)를 분리하여 가독성과 유지보수성 향상.
 
-### 2. 이벤트 기반 비동기 처리
-- **비동기 메시지 발송**: `RabbitMQ`를 활용하여 슬랙 메시지 발송 요청을 비동기로 처리합니다.
-- `TransmitSlackMessageEventProducer`를 통해 메시지 발송 이벤트를 발행하고, 이를 소비하여 실제 슬랙 API를 호출함으로써 시스템의 응답성을 높이고 결합도를 낮췄습니다.
+### 2. 이벤트 기반 비동기 아키텍처 (Event-Driven Architecture)
+* **결합도 완화 및 응답 속도 향상**: 메시지 발송 요청 시 DB 저장 후 `TransmitSlackMessageEventProducer`를 통해 RabbitMQ 이벤트를 비동기로 발행하고 즉시 응답을 반환하여 시스템 병목 방지.
+* **메시지 규격 표준화 (`EventEnvelope`)**: 이벤트 헤더(UUID, Actor ID, Event Type, Timestamp, Version)와 페이로드를 포함하는 공통 래퍼 객체를 도입하여 추적성 확보.
 
----
+### 3. 상태 전이 모델(State Machine) 및 멱등성 보장
+* **도메인 내 상태 제어**: `SlackMessageStatus` (PENDING, PROCESSING, SUCCESS, FAILED, RETRYING) 내부에 `canTransitionTo()` 메서드를 두어 비즈니스적으로 유효하지 않은 상태 전이(예: SUCCESS 후 처리)를 원천 차단.
+* **PROCESSING 락 상태 도입**: 비동기 전송 시작 시 `PROCESSING` 상태로 전환하여 동시 요청 시 중복 발송 방지 및 멱등성 보장.
 
-## 🗄️ 데이터베이스 테이블 명세 (Database Schema)
+### 4. AI Prompt Client 추상화
+* **AI 모델 유연성 확보**: `AiPromptClient` 인터페이스를 정의하고 `AiPromptClientImpl`에서 `ChatClient`를 활용하여 단건(`promptOne`) 및 리스트(`promptList`) 형태의 AI 알림 메시지 생성을 지원. AI 연동 구현체 변경 시 도메인 로직 수정 최소화.
 
-### `p_slack_messages` (슬랙 메시지 발송 이력 테이블)
-
-| 컬럼명 | 데이터 타입 | Nullable | PK / Key / Default | 설명 |
-| :--- | :--- | :--- | :--- | :--- |
-| `id` | `UUID` | **NOT NULL** | **PK** | 슬랙 메시지 기본키 (UUID) |
-| `receiver_id` | `UUID` | **NOT NULL** | - | 수신자 ID |
-| `sender_id` | `UUID` | **NOT NULL** | - | 발신자/요청자 ID |
-| `content` | `VARCHAR(1024)` | **NOT NULL** | - | 슬랙 메시지 본문 내용 |
-| `status` | `VARCHAR(24)` | **NOT NULL** | DEFAULT `'PENDING'` | 메시지 상태 (`PENDING`, `PROCESSING`, `SUCCESS`, `FAILED`, `RETRYING`) |
-| `retry_count` | `INTEGER` | **NOT NULL** | DEFAULT `0` | 발송 재시도 횟수 |
-| `error_message` | `VARCHAR(128)` | NULL | - | 발송 실패 시 예외 메시지 |
-| `version` | `BIGINT` | NULL | `@Version` | 낙관적 락(Optimistic Lock) 버저닝 컬럼 |
-| `created_at` | `TIMESTAMP` | **NOT NULL** | `@CreatedDate` | 레코드 생성 일시 |
-| `created_by` | `UUID` | NULL | `@CreatedBy` | 레코드 생성자 ID |
-| `updated_at` | `TIMESTAMP` | NULL | `@LastModifiedDate` | 레코드 수정 일시 |
-| `updated_by` | `UUID` | NULL | `@LastModifiedBy` | 레코드 수정자 ID |
-| `deleted_at` | `TIMESTAMP` | NULL | - | 논리 삭제 일시 (Soft Delete) |
-| `deleted_by` | `UUID` | NULL | - | 논리 삭제 처리자 ID |
+### 5. 분산 트레이싱 및 관측 가능성 (Observability)
+* Micrometer Tracing 및 Zipkin 연동을 통해 MSA 환경에서 서비스 간 요청 흐름 및 메시지 큐 트레이싱 가능.
 
 ---
 
-## 🔄 SlackMessage 도메인 생명주기 및 상태 전이 규칙
+## 💡 기술적 고민 및 해결
 
-`SlackMessage` 도메인은 **Record 기반 불변 엔티티**로 작성되어 있으며, 분산 환경에서의 **멱등성(Idempotency) 보장 및 중복 발송 차단**을 위해 `PROCESSING` 락 상태를 보유합니다.
+### 1. 분산 비동기 환경에서의 메시지 중복 발송 및 동시성 충돌
 
-```mermaid
-stateDiagram-v2
-    [*] --> PENDING: create()
-    PENDING --> PROCESSING: process()
-    RETRYING --> PROCESSING: process()
-    PROCESSING --> SUCCESS: complete()
-    PROCESSING --> RETRYING: retry()
-    PROCESSING --> FAILED: fail()
-    SUCCESS --> [*]
-    FAILED --> [*]
-```
+**문제**
+* 비동기 큐 소비(Consumer) 과정에서 동일한 메시지 전송 이벤트가 여러 번 수신되거나, 동시 요청이 들어올 경우 동일 메시지가 중복 발송되거나 DB 데이터 상태 변경 충돌 발생 위험.
 
-- **PENDING**: 알림 메시지 생성 완료 및 발송 대기 상태
-- **PROCESSING**: 전송 진행 중 상태 (중복 발송 방지 및 멱등성 락 역할)
-- **RETRYING**: 전송 실패 후 재시도 대기 상태 (재시도 횟수 `retryCount` 1 증가)
-- **SUCCESS**: 알림 발송 최종 성공 상태 (종결 상태)
-- **FAILED**: 최대 재시도 횟수 소진 등으로 인한 최종 발송 실패 상태 (종결 상태)
+**해결**
+* JPA `@Version` 필드를 이용한 **낙관적 락(Optimistic Lock)**을 도입하여 동시 수정 시 데이터 충돌 제어.
+* 도메인 상태 전이에 **`PROCESSING`** 상태를 도입하여 전송 처리 시작 시 선점 락 역할을 수행하도록 설계.
+
+**결과**
+* 별도의 레디스 분산 락 등 무거운 인프라 추가 없이 도메인 상태 제어와 낙관적 락만으로 중복 발송 차단 및 데이터 무결성 확보.
 
 ---
 
-## 🚀 실행 및 API 문서
+### 2. 메시지 큐 소비 시 비즈니스 예외에 의한 무한 재시도 및 병목 방지
 
-### 애플리케이션 실행
+**문제**
+* RabbitMQ Consumer에서 메시지를 처리하는 중 DB 조회 실패나 잘못된 파라미터 등 회복 불가능한 비즈니스 예외(`ApiException` 등)가 발생할 때, 기본 큐 정책에 의해 메시지가 계속 재시도(Requeue)되어 큐 병목 현상이 일어나는 문제 발생.
+
+**해결**
+* `ConditionalRejectingErrorHandler.DefaultFatalExceptionStrategy`를 상속받은 **`CustomFatalExceptionStrategy`**를 구현.
+* 역직렬화 실패 에러뿐만 아니라 비즈니스 예외 원인까지 검사하여 치명적인(Fatal) 오류로 판단되면 메시지를 즉시 Reject(Drop/DLQ 이동) 처리하도록 설정.
+
+**결과**
+* 불필요한 무한 재시도 루프를 방지하고 큐의 안정적인 소비 성능 유지.
+
+---
+
+## 🚀 실행 방법
+
 ```bash
 ./gradlew bootRun
 ```
 
-### Swagger API 문서
-애플리케이션 실행 후 접속 URL:
-- **Swagger UI**: `http://localhost:8080/api/api-docs`
-- **OpenAPI Spec**: `http://localhost:8080/api/api-spec`
+필요한 환경 변수 및 외부 인프라 설정은 프로젝트 공통 README를 참고해주세요.
+
+---
+
+## 🔗 Project
+
+전체 프로젝트의 아키텍처, ERD, 서비스 구성 및 팀원 역할은 Organization README에서 확인할 수 있습니다.
