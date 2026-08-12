@@ -18,9 +18,6 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
-@EnableFeignClients(
-        defaultConfiguration = OpenFeignConfig.class
-)
 @Configuration
 public class OpenFeignConfig {
 
