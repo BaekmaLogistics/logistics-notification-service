@@ -6,6 +6,7 @@ import com.sparta.logistics.notification.application.query.dto.SlackMessageInfo;
 import com.sparta.logistics.notification.application.query.usecase.GetSlackMessageUseCase;
 import com.sparta.logistics.notification.application.query.usecase.SearchSlackMessagesUseCase;
 import com.sparta.logistics.notification.common.code.GeneralResponseCode;
+import com.sparta.logistics.notification.common.security.AuthUser;
 import com.sparta.logistics.notification.presentation.common.dto.response.GeneralResponse;
 import com.sparta.logistics.notification.presentation.query.dto.SearchSlackMessageRequest;
 import com.sparta.logistics.notification.presentation.query.dto.SimpleSlackMessageResponse;
@@ -34,14 +35,14 @@ public class SlackMessageQueryController {
 
     @GetMapping("/v1/slack-messages")
     public ResponseEntity<GeneralResponse<Page<SimpleSlackMessageResponse>>> searchSlackMessages(
-            @AuthenticationPrincipal UUID userId,
+            @AuthenticationPrincipal AuthUser user,
             @Valid SearchSlackMessageRequest request,
             @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
         SearchSlackMessageQuery query = request.toQuery();
 
         Page<SimpleSlackMessageInfo> slackMessages =
-                searchSlackMessagesUseCase.searchMessages(query, pageable, userId);
+                searchSlackMessagesUseCase.searchMessages(query, pageable, user.id());
 
         return GeneralResponse.toResponseEntity(
                 GeneralResponseCode.OK, slackMessages.map(SimpleSlackMessageResponse::from)
@@ -50,11 +51,11 @@ public class SlackMessageQueryController {
 
     @GetMapping("/v1/slack-messages/{slackMessageId}")
     public ResponseEntity<GeneralResponse<SlackMessageResponse>> getSlackMessage(
-            @AuthenticationPrincipal UUID userId,
+            @AuthenticationPrincipal AuthUser user,
             @PathVariable UUID slackMessageId
     ) {
         SlackMessageInfo slackMessage =
-                getSlackMessageUseCase.getSlackMessage(slackMessageId, userId);
+                getSlackMessageUseCase.getSlackMessage(slackMessageId, user.id());
 
         return GeneralResponse.toResponseEntity(
                 GeneralResponseCode.OK, SlackMessageResponse.from(slackMessage)
