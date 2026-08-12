@@ -10,11 +10,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
-
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
@@ -35,14 +32,13 @@ class SearchSlackMessagesServiceTest {
         // given
         SearchSlackMessageQuery query = mock(SearchSlackMessageQuery.class);
         Pageable pageable = PageRequest.of(0, 10);
-        UUID userId = UUID.randomUUID();
         Page<SimpleSlackMessageInfo> expectedPage = mock(Page.class);
 
-        given(slackMessageQueryRepository.searchMessages(query, pageable, userId))
+        given(slackMessageQueryRepository.searchMessages(query, pageable))
                 .willReturn(expectedPage);
 
         // when
-        Page<SimpleSlackMessageInfo> result = searchSlackMessagesService.searchMessages(query, pageable, userId);
+        Page<SimpleSlackMessageInfo> result = searchSlackMessagesService.searchMessages(query, pageable);
 
         // then
         assertThat(result).isNotNull();

@@ -10,11 +10,10 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface SlackMessageQueryRepository {
-    Optional<SlackMessageInfo> findByIdAndUserId(UUID slackMessageId, UUID userId);
+    Optional<SlackMessageInfo> findById(UUID slackMessageId);
 
     Page<SimpleSlackMessageInfo> searchMessages(
             SearchSlackMessageQuery query,
-            Pageable pageable,
-            UUID userId
+            Pageable pageable
     );
 }
