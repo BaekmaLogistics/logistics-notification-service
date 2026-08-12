@@ -61,13 +61,6 @@ public class SlackMessageQueryRepositoryImpl implements SlackMessageQueryReposit
 
     @Override
     public Page<SimpleSlackMessageInfo> searchMessages(SearchSlackMessageQuery query, Pageable pageable, UUID userId) {
-        BooleanExpression condition = slackMessageJpaEntity.deletedAt.isNull()
-                .and(slackMessageJpaEntity.receiverId.eq(userId).or(slackMessageJpaEntity.senderId.eq(userId)))
-                .and(eqReceiverId(query.receiverId()))
-                .and(eqSenderId(query.senderId()))
-                .and(containsKeyword(query.keyword()))
-                .and(betweenCreatedAt(query.startDate(), query.endDate()));
-
         List<OrderSpecifier<?>> orderSpecifiers = getOrderSpecifiers(pageable);
 
         List<SimpleSlackMessageInfo> content = queryFactory
@@ -85,7 +78,14 @@ public class SlackMessageQueryRepositoryImpl implements SlackMessageQueryReposit
                         slackMessageJpaEntity.updatedBy
                 ))
                 .from(slackMessageJpaEntity)
-                .where(condition)
+                .where(
+                        slackMessageJpaEntity.deletedAt.isNull(),
+                        slackMessageJpaEntity.receiverId.eq(userId).or(slackMessageJpaEntity.senderId.eq(userId)),
+                        eqReceiverId(query.receiverId()),
+                        eqSenderId(query.senderId()),
+                        containsKeyword(query.keyword()),
+                        betweenCreatedAt(query.startDate(), query.endDate())
+                )
                 .orderBy(orderSpecifiers.toArray(new OrderSpecifier[0]))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
@@ -94,7 +94,14 @@ public class SlackMessageQueryRepositoryImpl implements SlackMessageQueryReposit
         Long total = queryFactory
                 .select(slackMessageJpaEntity.count())
                 .from(slackMessageJpaEntity)
-                .where(condition)
+                .where(
+                        slackMessageJpaEntity.deletedAt.isNull(),
+                        slackMessageJpaEntity.receiverId.eq(userId).or(slackMessageJpaEntity.senderId.eq(userId)),
+                        eqReceiverId(query.receiverId()),
+                        eqSenderId(query.senderId()),
+                        containsKeyword(query.keyword()),
+                        betweenCreatedAt(query.startDate(), query.endDate())
+                )
                 .fetchOne();
 
         return new PageImpl<>(content, pageable, total != null ? total : 0L);
@@ -123,6 +130,7 @@ public class SlackMessageQueryRepositoryImpl implements SlackMessageQueryReposit
         }
         return null;
     }
+
     private List<OrderSpecifier<?>> getOrderSpecifiers(Pageable pageable) {
         List<OrderSpecifier<?>> orderSpecifiers = new ArrayList<>();
 
