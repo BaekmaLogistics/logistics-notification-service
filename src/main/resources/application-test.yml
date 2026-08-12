@@ -1,36 +1,68 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/notification_test
-    username: test
-    password: test
+    url: jdbc:h2:mem:testdb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        show_sql: true
+        format_sql: true
+  cloud:
+    openfeign:
+      circuitbreaker:
+        enabled: true
+      client:
+        config:
+          default:
+            connect-timeout: 5000
+            read-timeout: 3000
+            logger-level: basic
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
 
   rabbitmq:
-    host: localhost
-    port: 5672
-    username: guest
-    password: guest
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
 
   ai:
     openai:
       api-key: test
       chat:
         options:
-          model: test
-          temperature: 0.7
+          model: test  # 사용할 모델
+          temperature: 0.7 # 응답의 다양성
 
-  data:
-    redis:
-      host: localhost
-      port: 6379
+logging:
+  level:
+    org.hibernate.SQL: debug
+    org.hibernate.orm.jdbc.bind: trace
 
 message:
   exchange: baekma.exchange # Producer만 적용
   queue:
-    delivery: delivery.queue
-    hub: hub.queue
     notification: notification.queue
-    order: order.queue
-
+    company: company.queue
+  binding-key:
+    notification:
+      inventory-low: hub.inventory.low
+      order-created: order.created
+      order-canceled: order.canceled
+      order-completed: order.completed
+      transmit-slack-message: notification.slack-message.transmit
+    hub:
+      route-changed: hub.route.changed
+    company:
+      hub-deleted: hub.deleted
 slack:
   api:
     url: test
