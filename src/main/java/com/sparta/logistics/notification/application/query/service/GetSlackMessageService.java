@@ -16,9 +16,9 @@ class GetSlackMessageService implements GetSlackMessageUseCase {
     private final SlackMessageQueryRepository slackMessageQueryRepository;
 
     @Override
-    public SlackMessageInfo getSlackMessage(UUID slackMessageId, UUID userId) {
+    public SlackMessageInfo getSlackMessage(UUID slackMessageId) {
         return slackMessageQueryRepository
-                .findByIdAndUserId(slackMessageId, userId)
+                .findById(slackMessageId)
                 .orElseThrow(() -> new ApiException(ErrorResponseCode.SLACK_MESSAGE_NOT_FOUND));
     }
 }

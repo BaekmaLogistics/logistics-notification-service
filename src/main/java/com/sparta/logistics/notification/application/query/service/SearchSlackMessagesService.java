@@ -10,8 +10,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.UUID;
-
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -21,9 +19,8 @@ class SearchSlackMessagesService implements SearchSlackMessagesUseCase {
     @Override
     public Page<SimpleSlackMessageInfo> searchMessages(
             SearchSlackMessageQuery query,
-            Pageable pageable,
-            UUID userId
+            Pageable pageable
     ) {
-        return slackMessageQueryRepository.searchMessages(query, pageable, userId);
+        return slackMessageQueryRepository.searchMessages(query, pageable);
     }
 }

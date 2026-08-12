@@ -18,6 +18,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -33,6 +34,7 @@ public class SlackMessageQueryController {
     private final SearchSlackMessagesUseCase searchSlackMessagesUseCase;
     private final GetSlackMessageUseCase getSlackMessageUseCase;
 
+    @PreAuthorize("hasAnyRole('MASTER')")
     @GetMapping("/v1/slack-messages")
     public ResponseEntity<GeneralResponse<Page<SimpleSlackMessageResponse>>> searchSlackMessages(
             @AuthenticationPrincipal AuthUser user,
@@ -42,20 +44,21 @@ public class SlackMessageQueryController {
         SearchSlackMessageQuery query = request.toQuery();
 
         Page<SimpleSlackMessageInfo> slackMessages =
-                searchSlackMessagesUseCase.searchMessages(query, pageable, user.id());
+                searchSlackMessagesUseCase.searchMessages(query, pageable);
 
         return GeneralResponse.toResponseEntity(
                 GeneralResponseCode.OK, slackMessages.map(SimpleSlackMessageResponse::from)
         );
     }
 
+    @PreAuthorize("hasAnyRole('MASTER')")
     @GetMapping("/v1/slack-messages/{slackMessageId}")
     public ResponseEntity<GeneralResponse<SlackMessageResponse>> getSlackMessage(
             @AuthenticationPrincipal AuthUser user,
             @PathVariable UUID slackMessageId
     ) {
         SlackMessageInfo slackMessage =
-                getSlackMessageUseCase.getSlackMessage(slackMessageId, user.id());
+                getSlackMessageUseCase.getSlackMessage(slackMessageId);
 
         return GeneralResponse.toResponseEntity(
                 GeneralResponseCode.OK, SlackMessageResponse.from(slackMessage)

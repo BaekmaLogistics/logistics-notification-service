@@ -33,10 +33,9 @@ public class SlackMessageQueryRepositoryImpl implements SlackMessageQueryReposit
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public Optional<SlackMessageInfo> findByIdAndUserId(UUID slackMessageId, UUID userId) {
+    public Optional<SlackMessageInfo> findById(UUID slackMessageId) {
         BooleanExpression condition = slackMessageJpaEntity.id.eq(slackMessageId)
-                .and(slackMessageJpaEntity.deletedAt.isNull())
-                .and(slackMessageJpaEntity.receiverId.eq(userId).or(slackMessageJpaEntity.senderId.eq(userId)));
+                .and(slackMessageJpaEntity.deletedAt.isNull());
 
         SlackMessageInfo info = queryFactory
                 .select(Projections.constructor(SlackMessageInfo.class,
@@ -60,7 +59,7 @@ public class SlackMessageQueryRepositoryImpl implements SlackMessageQueryReposit
     }
 
     @Override
-    public Page<SimpleSlackMessageInfo> searchMessages(SearchSlackMessageQuery query, Pageable pageable, UUID userId) {
+    public Page<SimpleSlackMessageInfo> searchMessages(SearchSlackMessageQuery query, Pageable pageable) {
         List<OrderSpecifier<?>> orderSpecifiers = getOrderSpecifiers(pageable);
 
         List<SimpleSlackMessageInfo> content = queryFactory
@@ -80,7 +79,6 @@ public class SlackMessageQueryRepositoryImpl implements SlackMessageQueryReposit
                 .from(slackMessageJpaEntity)
                 .where(
                         slackMessageJpaEntity.deletedAt.isNull(),
-                        slackMessageJpaEntity.receiverId.eq(userId).or(slackMessageJpaEntity.senderId.eq(userId)),
                         eqReceiverId(query.receiverId()),
                         eqSenderId(query.senderId()),
                         containsKeyword(query.keyword()),
@@ -96,7 +94,6 @@ public class SlackMessageQueryRepositoryImpl implements SlackMessageQueryReposit
                 .from(slackMessageJpaEntity)
                 .where(
                         slackMessageJpaEntity.deletedAt.isNull(),
-                        slackMessageJpaEntity.receiverId.eq(userId).or(slackMessageJpaEntity.senderId.eq(userId)),
                         eqReceiverId(query.receiverId()),
                         eqSenderId(query.senderId()),
                         containsKeyword(query.keyword()),

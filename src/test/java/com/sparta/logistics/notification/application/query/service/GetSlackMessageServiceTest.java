@@ -35,11 +35,11 @@ class GetSlackMessageServiceTest {
         UUID userId = UUID.randomUUID();
         SlackMessageInfo slackMessageInfo = mock(SlackMessageInfo.class);
 
-        given(slackMessageQueryRepository.findByIdAndUserId(messageId, userId))
+        given(slackMessageQueryRepository.findById(messageId))
                 .willReturn(Optional.of(slackMessageInfo));
 
         // when
-        SlackMessageInfo result = getSlackMessageService.getSlackMessage(messageId, userId);
+        SlackMessageInfo result = getSlackMessageService.getSlackMessage(messageId);
 
         // then
         assertThat(result).isNotNull();
@@ -51,13 +51,12 @@ class GetSlackMessageServiceTest {
     void getSlackMessage_notFound_throwsApiException() {
         // given
         UUID messageId = UUID.randomUUID();
-        UUID userId = UUID.randomUUID();
 
-        given(slackMessageQueryRepository.findByIdAndUserId(messageId, userId))
+        given(slackMessageQueryRepository.findById(messageId))
                 .willReturn(Optional.empty());
 
         // when & then
-        assertThatThrownBy(() -> getSlackMessageService.getSlackMessage(messageId, userId))
+        assertThatThrownBy(() -> getSlackMessageService.getSlackMessage(messageId))
                 .isInstanceOf(ApiException.class);
     }
 }
