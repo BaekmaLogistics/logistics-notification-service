@@ -1,13 +1,24 @@
+server:
+  port: ${SERVER_PORT:8084}
+
 spring:
   application:
     name: notification-service
   profiles:
-    active: local
+    default: local
+  config:
+    import: "optional:configserver:"
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        show_sql: true
+        format_sql: true
+        use_sql_comments: true
+        impl.uuid_binary_compatibility: true
   cloud:
-    config:
-      discovery:
-        enabled: true
-        service-id: config-server
     openfeign:
       circuitbreaker:
         enabled: true
@@ -18,21 +29,10 @@ spring:
             read-timeout: 3000
             logger-level: basic
 
-server:
-  port: 8084
-
-eureka:
-  client:
-    service-url:
-      defaultZone: ${EUREKA_SERVER_URL:http://localhost:8761/eureka/}
-
 message:
   exchange: baekma.exchange # Producer만 적용
   queue:
-    delivery: delivery.queue
-    hub: hub.queue
     notification: notification.queue
-    order: order.queue
     company: company.queue
   binding-key:
     notification:
@@ -46,26 +46,17 @@ message:
     company:
       hub-deleted: hub.deleted
 
-management:
-  tracing:
+springdoc:
+  api-docs:
+    path: /api/api-spec
     enabled: true
-    sampling:
-      probability: 1.0
-  zipkin:
-    tracing:
-      endpoint: ${ZIPKIN_SERVER:http://localhost:9411/api/v2/spans}
+  swagger-ui:
+    path: /api/api-docs
+    enabled: true
+  override-with-generic-response: false
+  use-fqn: true
 
----
-# 로컬 / 테스트 환경 (Config Server 안 띄우고 로컬 설정으로만 돌림)
-spring:
-  config:
-    activate:
-      on-profile: local, test
-
----
-# 운영/배포 환경 (prod, dev 등 -> Fail-Fast 적용)
-spring:
-  config:
-    activate:
-      on-profile: prod, dev
-    import: "configserver:"
+logging:
+  level:
+    org.hibernate.SQL: debug
+    org.hibernate.orm.jdbc.bind: trace
