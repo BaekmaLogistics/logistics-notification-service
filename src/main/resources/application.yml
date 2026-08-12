@@ -33,6 +33,26 @@ message:
     hub: hub.queue
     notification: notification.queue
     order: order.queue
+    company: company.queue
+  binding-key:
+    notification:
+      inventory-low: hub.inventory.low
+      order-created: order.created
+      order-canceled: order.canceled
+      order-completed: order.completed
+    hub:
+      route-changed: hub.route.changed
+    company:
+      hub-deleted: hub.deleted
+
+management:
+  tracing:
+    enabled: true
+    sampling:
+      probability: 1.0
+  zipkin:
+    tracing:
+      endpoint: ${ZIPKIN_SERVER:http://localhost:9411/api/v2/spans}
 
 ---
 # 로컬 / 테스트 환경 (Config Server 안 띄우고 로컬 설정으로만 돌림)
