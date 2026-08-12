@@ -26,6 +26,8 @@ public class QueueConfig {
     private String keyNotificationOrderCanceled;
     @Value("${message.binding-key.notification.order-completed}")
     private String keyNotificationOrderCompleted;
+    @Value("${message.binding-key.notification.transmit-slack-message}")
+    private String transmitSlackMessage;
     @Value("${message.binding-key.hub.route-changed}")
     private String keyHubRouteChanged;
     @Value("${message.binding-key.company.hub-deleted}")
@@ -71,5 +73,13 @@ public class QueueConfig {
         return BindingBuilder.bind(queueNotification())
                 .to(exchange())
                 .with(keyNotificationOrderCompleted);
+    }
+
+    // Notification -> Notification (슬랙 메세지 비동기 전송)
+    @Bean
+    public Binding bindingNotificationTransmitSlackMessage() {
+        return BindingBuilder.bind(queueNotification())
+                .to(exchange())
+                .with(transmitSlackMessage);
     }
 }
