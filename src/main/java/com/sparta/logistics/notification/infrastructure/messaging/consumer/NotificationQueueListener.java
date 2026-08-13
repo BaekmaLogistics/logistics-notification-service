@@ -18,18 +18,15 @@ public class NotificationQueueListener {
     private final TransmitSlackMessageUseCase transmitSlackMessageUseCase;
 
     @RabbitHandler
-    public void consumeOrderCreated(EventEnvelope<OrderCreatedPayload> event) {
-        OrderCreatedPayload payload = event.payload();
+    public void consume(EventEnvelope<?> event) {
+        Object payload = event.payload();
 
-        sendOrderNotificationUseCase.send(
-                payload.toCommand()
-        );
-    }
-
-    @RabbitHandler
-    public void consumeTransmitSlackMessage(EventEnvelope<TransmitSlackMessagePayload> event) {
-        TransmitSlackMessagePayload payload = event.payload();
-
-        transmitSlackMessageUseCase.transmit(payload.toCommand(event.header().actorId()));
+        if (payload instanceof OrderCreatedPayload p) {
+            sendOrderNotificationUseCase.send(p.toCommand());
+        } else if (payload instanceof TransmitSlackMessagePayload p) {
+            transmitSlackMessageUseCase.transmit(p.toCommand(event.header().actorId()));
+        } else {
+            throw new IllegalArgumentException("Unsupported payload type: " + payload.getClass());
+        }
     }
 }
