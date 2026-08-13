@@ -1,6 +1,7 @@
 package com.sparta.logistics.notification.infrastructure.feign.client;
 
 import com.sparta.logistics.notification.infrastructure.feign.config.OpenFeignConfig;
+import com.sparta.logistics.notification.infrastructure.feign.dto.SearchUsersRequest;
 import com.sparta.logistics.notification.infrastructure.feign.dto.UserResponse;
 import com.sparta.logistics.notification.infrastructure.feign.fallback.UserFeignClientFallbackFactory;
 import com.sparta.logistics.notification.presentation.common.dto.response.GeneralResponse;
@@ -20,6 +21,6 @@ public interface UserFeignClient {
 
     @PostMapping("/internal/api/v1/users/search")
     GeneralResponse<List<UserResponse>> searchUsersById(
-            @RequestBody List<UUID> userIds
+            @RequestBody SearchUsersRequest request
     );
 }

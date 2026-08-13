@@ -5,6 +5,7 @@ import com.sparta.logistics.notification.application.command.model.UserInfo;
 import com.sparta.logistics.notification.common.code.ErrorResponseCode;
 import com.sparta.logistics.notification.common.exception.ApiException;
 import com.sparta.logistics.notification.infrastructure.feign.client.UserFeignClient;
+import com.sparta.logistics.notification.infrastructure.feign.dto.SearchUsersRequest;
 import com.sparta.logistics.notification.infrastructure.feign.dto.UserResponse;
 import com.sparta.logistics.notification.presentation.common.dto.response.GeneralResponse;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +28,9 @@ class UserServiceClientImpl implements UserServiceClient {
     @Override
     public Map<UUID, UserInfo> searchUserSlackInfos(List<UUID> userIds) {
         GeneralResponse<List<UserResponse>> response =
-                userFeignClient.searchUsersById(userIds);
+                userFeignClient.searchUsersById(
+                        new SearchUsersRequest(userIds)
+                );
 
         if (response == null || response.data() == null) {
             throw new ApiException(ErrorResponseCode.FEIGN_CLIENT_ERROR, "사용자 정보를 찾을 수 없습니다.");
