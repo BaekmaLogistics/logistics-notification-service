@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.UUID;
 
-@FeignClient(name = "product-service", configuration = OpenFeignConfig.class)
+@FeignClient(name = "company-product-service", configuration = OpenFeignConfig.class)
 public interface ProductFeignClient {
 
     @GetMapping("/internal/api/v1/products/{productId}")
