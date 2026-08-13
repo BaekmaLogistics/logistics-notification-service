@@ -8,6 +8,7 @@ import com.sparta.logistics.notification.infrastructure.messaging.envelope.Event
 import com.sparta.logistics.notification.infrastructure.messaging.event.OrderCreatedPayload;
 import com.sparta.logistics.notification.infrastructure.messaging.event.TransmitSlackMessagePayload;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitHandler;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 @RabbitListener(queues = "${message.queue.notification}")
+@Slf4j
 public class NotificationQueueListener {
     private final SendOrderNotificationUseCase sendOrderNotificationUseCase;
     private final TransmitSlackMessageUseCase transmitSlackMessageUseCase;
@@ -25,6 +27,7 @@ public class NotificationQueueListener {
         EventType eventType = EventType.fromKeyString(event.header().eventType());
 
         if (eventType == EventType.UNDEFINED) {
+            log.error("event consume Error {}", event);
             throw new IllegalArgumentException("Unsupported event type: " + event.header().eventType());
         }
 
@@ -34,7 +37,8 @@ public class NotificationQueueListener {
         // 비즈니스 로직 디스패칭
         switch (eventType) {
             case ORDER_CREATED -> sendOrderNotificationUseCase.send(((OrderCreatedPayload) payload).toCommand());
-            case TRANSMIT_SLACK_MESSAGE -> transmitSlackMessageUseCase.transmit(((TransmitSlackMessagePayload) payload).toCommand(event.header().actorId()));
+            case TRANSMIT_SLACK_MESSAGE ->
+                    transmitSlackMessageUseCase.transmit(((TransmitSlackMessagePayload) payload).toCommand(event.header().actorId()));
         }
     }
 
