@@ -3,11 +3,13 @@ package com.sparta.logistics.notification.infrastructure.persistence.command.rep
 import com.sparta.logistics.notification.common.code.ErrorResponseCode;
 import com.sparta.logistics.notification.common.exception.ApiException;
 import com.sparta.logistics.notification.domain.entity.SlackMessage;
+import com.sparta.logistics.notification.domain.model.SlackMessageStatus;
 import com.sparta.logistics.notification.domain.repository.SlackMessageCommandRepository;
 import com.sparta.logistics.notification.infrastructure.persistence.command.entity.SlackMessageJpaEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -27,6 +29,14 @@ public class SlackMessageCommandRepositoryImpl implements SlackMessageCommandRep
         return commandJpaRepository.findById(slackMessageId)
                 .filter(entity -> entity.getDeletedAt() == null)
                 .map(SlackMessageJpaEntity::toModel);
+    }
+
+    @Override
+    public List<SlackMessage> findAllByStatusIn(List<SlackMessageStatus> statuses) {
+        return commandJpaRepository.findAllByStatusInAndDeletedAtIsNull(statuses)
+                .stream()
+                .map(SlackMessageJpaEntity::toModel)
+                .toList();
     }
 
     @Override

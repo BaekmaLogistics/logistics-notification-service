@@ -32,7 +32,6 @@ class GetSlackMessageServiceTest {
     void getSlackMessage_success() {
         // given
         UUID messageId = UUID.randomUUID();
-        UUID userId = UUID.randomUUID();
         SlackMessageInfo slackMessageInfo = mock(SlackMessageInfo.class);
 
         given(slackMessageQueryRepository.findById(messageId))
