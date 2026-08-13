@@ -5,7 +5,7 @@ import com.sparta.logistics.notification.application.command.usecase.SendOrderNo
 import com.sparta.logistics.notification.application.command.usecase.TransmitSlackMessageUseCase;
 import com.sparta.logistics.notification.infrastructure.messaging.constant.EventType;
 import com.sparta.logistics.notification.infrastructure.messaging.envelope.EventEnvelope;
-import com.sparta.logistics.notification.infrastructure.messaging.event.OrderCompletedPayload;
+import com.sparta.logistics.notification.infrastructure.messaging.event.OrderCreatedPayload;
 import com.sparta.logistics.notification.infrastructure.messaging.event.TransmitSlackMessagePayload;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.annotation.RabbitHandler;
@@ -33,7 +33,7 @@ public class NotificationQueueListener {
 
         // 비즈니스 로직 디스패칭
         switch (eventType) {
-            case ORDER_COMPLETED -> sendOrderNotificationUseCase.send(((OrderCompletedPayload) payload).toCommand());
+            case ORDER_CREATED -> sendOrderNotificationUseCase.send(((OrderCreatedPayload) payload).toCommand());
             case TRANSMIT_SLACK_MESSAGE -> transmitSlackMessageUseCase.transmit(((TransmitSlackMessagePayload) payload).toCommand(event.header().actorId()));
         }
     }

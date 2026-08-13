@@ -1,6 +1,6 @@
 package com.sparta.logistics.notification.infrastructure.messaging.constant;
 
-import com.sparta.logistics.notification.infrastructure.messaging.event.OrderCompletedPayload;
+import com.sparta.logistics.notification.infrastructure.messaging.event.OrderCreatedPayload;
 import com.sparta.logistics.notification.infrastructure.messaging.event.TransmitSlackMessagePayload;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -12,8 +12,8 @@ import java.util.stream.Collectors;
 @Getter
 @RequiredArgsConstructor
 public enum EventType {
-    ORDER_COMPLETED("OrderCompleted", OrderCompletedPayload.class),
-    TRANSMIT_SLACK_MESSAGE("TransmitSlackMessage", TransmitSlackMessagePayload.class),
+    ORDER_CREATED("OrderCreatedEvent", OrderCreatedPayload.class),
+    TRANSMIT_SLACK_MESSAGE("TransmitSlackMessageEvent", TransmitSlackMessagePayload.class),
     UNDEFINED("Undefined", null);
 
     private static final Map<String, EventType> EVENT_KEY_MAP =
