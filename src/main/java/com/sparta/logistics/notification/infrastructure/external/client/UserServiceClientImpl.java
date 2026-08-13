@@ -8,6 +8,7 @@ import com.sparta.logistics.notification.infrastructure.feign.client.UserFeignCl
 import com.sparta.logistics.notification.infrastructure.feign.dto.UserResponse;
 import com.sparta.logistics.notification.presentation.common.dto.response.GeneralResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -15,6 +16,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 class UserServiceClientImpl implements UserServiceClient {
@@ -38,6 +40,7 @@ class UserServiceClientImpl implements UserServiceClient {
                 ));
 
         if (!userInfos.keySet().containsAll(userIds)) {
+            log.error("userIds = {}, userInfos = {}", userIds, userInfos);
             throw new ApiException(
                     ErrorResponseCode.FEIGN_CLIENT_ERROR,
                     "일부 사용자 정보를 찾을 수 없습니다."
