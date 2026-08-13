@@ -5,7 +5,7 @@ import com.sparta.logistics.notification.application.command.dto.SendOrderNotifi
 import java.time.Instant;
 import java.util.UUID;
 
-public record OrderCreatedPayload(
+public record OrderCompletedPayload(
         UUID id, // 주문 ID
         UUID departureHubId, // 배송 출발 Hub ID
         UUID receiverCompanyId, // 수령 업체 ID

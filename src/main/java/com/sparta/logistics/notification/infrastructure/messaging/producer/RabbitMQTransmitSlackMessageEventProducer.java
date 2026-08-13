@@ -1,6 +1,7 @@
 package com.sparta.logistics.notification.infrastructure.messaging.producer;
 
 import com.sparta.logistics.notification.application.command.producer.TransmitSlackMessageEventProducer;
+import com.sparta.logistics.notification.infrastructure.messaging.constant.EventType;
 import com.sparta.logistics.notification.infrastructure.messaging.envelope.EventEnvelope;
 import com.sparta.logistics.notification.infrastructure.messaging.event.TransmitSlackMessagePayload;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +27,7 @@ public class RabbitMQTransmitSlackMessageEventProducer implements TransmitSlackM
         TransmitSlackMessagePayload payload = new TransmitSlackMessagePayload(slackMessageId);
 
         EventEnvelope<TransmitSlackMessagePayload> event = EventEnvelope.of(
-                "TransmitSlackMessage",
+                EventType.TRANSMIT_SLACK_MESSAGE.getKey(),
                 payload,
                 actorId
         );
