@@ -2,6 +2,7 @@ package com.sparta.logistics.notification.infrastructure.feign.client;
 
 import com.sparta.logistics.notification.infrastructure.feign.config.OpenFeignConfig;
 import com.sparta.logistics.notification.infrastructure.feign.dto.CompanyResponse;
+import com.sparta.logistics.notification.infrastructure.feign.dto.ProductResponse;
 import com.sparta.logistics.notification.presentation.common.dto.response.GeneralResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,5 +16,9 @@ public interface CompanyFeignClient {
     @GetMapping("/internal/api/v1/companies/{companyId}")
     GeneralResponse<CompanyResponse> getCompanyById(
             @PathVariable UUID companyId
+    );
+    @GetMapping("/internal/api/v1/products/{productId}")
+    GeneralResponse<ProductResponse> getProductById(
+            @PathVariable UUID productId
     );
 }
